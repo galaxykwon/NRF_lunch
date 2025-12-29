@@ -10,7 +10,6 @@ export default async function handler(req, res) {
     '장대동', '궁동', '노은동', '만년동', '지족동', '반석동'
   ];
   
-  // [강력 필터] 제외할 단어 리스트
   const EXCLUDE_CATS = ['카페', '디저트', '베이커리', '빵집', '커피', '술집', '포차', '바(BAR)', '주점', '아이스크림', '도넛'];
 
   try {
@@ -28,20 +27,12 @@ export default async function handler(req, res) {
     results.forEach(data => {
       if (data.items) {
         data.items.forEach(item => {
-          // 1. 제외 카테고리 체크 (카페, 술집 등)
           const isExcluded = EXCLUDE_CATS.some(ex => item.category.includes(ex));
-          
-          // 2. 패스트푸드 체크 (양식 필터 오염 방지)
-          const isFastFood = item.category.includes('패스트푸드') || item.category.includes('피자') || item.category.includes('치킨');
-
-          if (!isExcluded && !isFastFood) {
-            allItems.push(item);
-          }
+          if (!isExcluded) allItems.push(item);
         });
       }
     });
 
-    // 중복 제거 (상호명 기준)
     const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
 
     res.setHeader('Cache-Control', 'no-store');
