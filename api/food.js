@@ -102,7 +102,6 @@ export default async function handler(req, res) {
           const cat = item.category || "";
           const name = item.name;
           
-          // [세심한 필터링] 고급 키워드가 있으면 무조건 비싼 가격대로 고정
           if (['한정식', '오마카세', '코스', '한우', '소고기', '참치', '스시', '스테이크', '장어', '복어'].some(w => name.includes(w) || cat.includes(w))) {
             item.price = 35000; 
           } 
