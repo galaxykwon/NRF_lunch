@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie - 15분 거리 확대판</title>
+    <title>NRF Foodie - 예산별 맞춤 가이드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -13,10 +13,10 @@
         .chart-container { 
             position: relative; 
             width: 100%; 
-            height: 220px; 
+            height: 200px; 
         } 
         @media (min-width: 768px) { 
-            .chart-container { height: 280px; } 
+            .chart-container { height: 260px; } 
         }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -27,7 +27,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-    <!-- Chosen Palette: Warm Neutrals & NRF Blue. Expanded radius to 15 mins. -->
+    <!-- Chosen Palette: Warm Neutrals & NRF Blue. Added Price Range Toggles. -->
 </head>
 <body class="text-slate-800">
 
@@ -41,140 +41,123 @@
                 </div>
             </div>
             <div class="text-[9px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full uppercase">
-                Radius 15min Expanded
+                Budget Filter Added
             </div>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 py-4 space-y-6">
 
-        <!-- Top Analysis Section -->
-        <section>
-            <div class="mb-4">
-                <h2 class="text-lg font-bold text-slate-900">오늘의 점심 메뉴 추천</h2>
-                <p class="text-xs text-slate-500">가격 대비 평점을 고려한 식당 가이드입니다.</p>
-            </div>
-            
-            <div class="flex flex-col md:flex-row gap-4 items-stretch">
-                <!-- Left: KPIs -->
-                <div class="flex flex-row md:flex-col gap-3 w-full md:w-40 shrink-0">
-                    <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                        <p class="text-[10px] font-bold text-slate-400 mb-1">평균 식비</p>
-                        <div class="flex items-baseline gap-0.5">
-                            <span class="text-xl font-black text-slate-900" id="stat-price">-</span>
-                            <span class="text-xs font-medium text-slate-500">원</span>
-                        </div>
-                    </div>
-                    <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                        <p class="text-[10px] font-bold text-slate-400 mb-1">평균 평점</p>
-                        <div class="flex items-baseline gap-0.5">
-                            <span class="text-xl font-black text-slate-900" id="stat-rating">-</span>
-                            <span class="text-yellow-500 text-xs">★</span>
-                        </div>
+        <!-- Analysis Section -->
+        <section class="flex flex-col md:flex-row gap-4 items-stretch">
+            <div class="flex flex-row md:flex-col gap-3 w-full md:w-40 shrink-0">
+                <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-bold text-slate-400 mb-1">평균 식비</p>
+                    <div class="flex items-baseline justify-center gap-0.5">
+                        <span class="text-xl font-black text-slate-900" id="stat-price">-</span>
+                        <span class="text-xs font-medium text-slate-500">원</span>
                     </div>
                 </div>
-
-                <!-- Right: Scatter Matrix -->
-                <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 min-w-0">
-                    <h3 class="text-xs font-bold text-slate-500 mb-3 flex items-center gap-1">
-                        <span>📊 가성비 매트릭스 (15분 반경)</span>
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="scatterChart"></canvas>
+                <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center text-center">
+                    <p class="text-[10px] font-bold text-slate-400 mb-1">평균 평점</p>
+                    <div class="flex items-baseline justify-center gap-0.5">
+                        <span class="text-xl font-black text-slate-900" id="stat-rating">-</span>
+                        <span class="text-yellow-500 text-xs">★</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 min-w-0">
+                <div class="chart-container">
+                    <canvas id="scatterChart"></canvas>
                 </div>
             </div>
         </section>
 
-        <!-- List Section -->
+        <!-- Filter Section -->
         <section class="space-y-3">
-            <!-- Sticky Filter & Search -->
-            <div class="sticky top-[64px] z-40 bg-[#F8FAFC]/90 backdrop-blur-md py-2 -mx-1 px-1">
-                <div class="flex flex-col gap-2">
+            <div class="sticky top-[64px] z-40 bg-[#F8FAFC]/95 backdrop-blur-md py-2 -mx-1 px-1 space-y-3">
+                <!-- Neighborhood Filter -->
+                <div class="flex flex-col gap-1.5">
+                    <p class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-wider">Neighborhood</p>
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" id="area-bar">
+                        <!-- Area Buttons -->
+                    </div>
+                </div>
+                <!-- Price Filter -->
+                <div class="flex flex-col gap-1.5">
+                    <p class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-wider">Price Range</p>
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" id="price-bar">
+                        <!-- Price Range Buttons -->
+                    </div>
+                </div>
+                <!-- Category Filter -->
+                <div class="flex flex-col gap-1.5">
+                    <p class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-wider">Category</p>
                     <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" id="filter-bar">
-                        <!-- Filters -->
+                        <!-- Category Buttons -->
                     </div>
-                    <div class="relative">
-                        <input type="text" id="search-box" placeholder="식당명이나 메뉴로 검색..." 
-                            class="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 text-lg">🔍</span>
-                    </div>
+                </div>
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" id="search-box" placeholder="식당명이나 메뉴 검색..." 
+                        class="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
                 </div>
             </div>
 
-            <!-- Restaurant Cards Container -->
+            <!-- List -->
             <div id="res-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-8">
-                <!-- List Items -->
+                <!-- Items -->
             </div>
         </section>
     </main>
 
     <script>
-        // --- DATASET: 15min Radius Expansion ---
+        const AREAS = ['전체', '신성동', '도룡동', '어은동', '전민동', '기타'];
+        const CATEGORIES = ['전체', '한식', '중식', '일식', '양식', '분식'];
+        const PRICES = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
+
         const RESTAURANTS = [
-            // 한식 (15분 거리 포함)
-            { id: 1, cat: "한식", name: "숯골원냉면", menu: "평양냉면, 꿩냉면", time: 4, rating: 4.3, price: 11000 },
-            { id: 2, cat: "한식", name: "천리집", menu: "순대국밥, 모듬순대", time: 4, rating: 4.5, price: 9000 },
-            { id: 3, cat: "한식", name: "유성옥 도룡점", menu: "한우곰탕, 수육", time: 6, rating: 4.4, price: 13000 },
-            { id: 4, cat: "한식", name: "김판순김치찌개", menu: "김치찌개, 계란말이", time: 5, rating: 4.4, price: 10000 },
-            { id: 5, cat: "한식", name: "광세족발 (전민동)", menu: "족발", time: 12, rating: 4.7, price: 18000 },
-            { id: 6, cat: "한식", name: "신성집", menu: "석갈비, 갈비탕", time: 3, rating: 4.1, price: 15000 },
-            { id: 7, cat: "한식", name: "산정거랑", menu: "추어탕", time: 7, rating: 4.3, price: 11000 },
-            { id: 8, cat: "한식", name: "진도집", menu: "낙지볶음", time: 5, rating: 4.0, price: 12000 },
-            { id: 9, cat: "한식", name: "흥남부두", menu: "밀면, 돼지불백", time: 4, rating: 4.2, price: 9000 },
-            { id: 10, cat: "한식", name: "명성각 (죽동)", menu: "짬뽕, 탕수육", time: 11, rating: 4.3, price: 10000 },
+            // 신성동 (S)
+            { id: 1, area: "신성동", cat: "한식", name: "숯골원냉면", menu: "평양냉면, 꿩냉면", time: 4, rating: 4.3, price: 11000 },
+            { id: 2, area: "신성동", cat: "한식", name: "천리집", menu: "순대국밥, 모듬순대", time: 4, rating: 4.5, price: 9000 },
+            { id: 4, area: "신성동", cat: "한식", name: "김판순김치찌개", menu: "김치찌개, 계란말이", time: 5, rating: 4.4, price: 10000 },
+            { id: 5, area: "신성동", cat: "한식", name: "옹기칼국수", menu: "물총칼국수", time: 5, rating: 4.2, price: 8000 },
+            { id: 21, area: "신성동", cat: "일식", name: "토모카츠", menu: "돈카츠 전문", time: 5, rating: 4.6, price: 13000 },
+            { id: 22, area: "신성동", cat: "일식", name: "미요리", menu: "초밥, 사시미", time: 4, rating: 4.3, price: 18000 },
+            { id: 12, area: "신성동", cat: "중식", name: "낭만짬뽕", menu: "고기짬뽕", time: 4, rating: 4.4, price: 9500 },
+            { id: 42, area: "신성동", cat: "분식", name: "신전떡볶이", menu: "매운 떡볶이", time: 4, rating: 4.1, price: 6000 },
+            
+            // 도룡동 (D)
+            { id: 3, area: "도룡동", cat: "한식", name: "유성옥 도룡점", menu: "한우곰탕, 수육", time: 6, rating: 4.4, price: 13000 },
+            { id: 34, area: "도룡동", cat: "양식", name: "라쿠치나", menu: "이탈리안", time: 8, rating: 4.6, price: 22000 },
+            { id: 27, area: "도룡동", cat: "일식", name: "스시호산", menu: "오마카세", time: 10, rating: 4.9, price: 80000 },
+            { id: 38, area: "도룡동", cat: "양식", name: "르몽드", menu: "브런치", time: 7, rating: 4.3, price: 15000 },
+            { id: 44, area: "도룡동", cat: "분식", name: "바르다김선생", menu: "김밥, 만두", time: 5, rating: 4.2, price: 7500 },
+            { id: 15, area: "도룡동", cat: "중식", name: "동방명주", menu: "사천탕면", time: 8, rating: 4.6, price: 12000 },
 
-            // 중식
-            { id: 11, cat: "중식", name: "천안문", menu: "야끼짬뽕, 탕수육", time: 3, rating: 4.2, price: 9000 },
-            { id: 12, cat: "중식", name: "낭만짬뽕", menu: "고기짬뽕", time: 4, rating: 4.4, price: 9500 },
-            { id: 13, cat: "중식", name: "마피아짬뽕", menu: "매운짬뽕", time: 5, rating: 4.1, price: 9000 },
-            { id: 14, cat: "중식", name: "리원 (죽동)", menu: "코스요리, 짜장", time: 10, rating: 4.2, price: 11000 },
-            { id: 15, cat: "중식", name: "동방명주", menu: "사천탕면", time: 8, rating: 4.6, price: 12000 },
-            { id: 16, cat: "중식", name: "짜장천국", menu: "가성비 짜장면", time: 3, rating: 3.8, price: 6000 },
-            { id: 17, cat: "중식", name: "대동반점", menu: "볶음밥", time: 5, rating: 4.2, price: 8500 },
-            { id: 18, cat: "중식", name: "홍콩반점", menu: "짬뽕, 탕수육", time: 6, rating: 4.0, price: 8000 },
-            { id: 19, cat: "중식", name: "희락반점", menu: "유니짜장", time: 9, rating: 4.5, price: 9000 },
-            { id: 20, cat: "중식", name: "차이나공 (노은동)", menu: "딤섬, 코스", time: 14, rating: 4.4, price: 15000 },
+            // 어은동/궁동 (A/G)
+            { id: 32, area: "어은동", cat: "양식", name: "에이트 (궁동)", menu: "수제버거", time: 12, rating: 4.6, price: 11000 },
+            { id: 24, area: "어은동", cat: "일식", name: "별리달리 (궁동)", menu: "돈까스, 덮밥", time: 13, rating: 4.5, price: 9000 },
+            { id: 50, area: "어은동", cat: "분식", name: "빨봉분식 (궁동)", menu: "치즈떡볶이", time: 13, rating: 4.1, price: 8500 },
+            { id: 49, area: "어은동", cat: "분식", name: "죠스떡볶이", menu: "떡볶이 세트", time: 7, rating: 4.0, price: 6500 },
 
-            // 일식
-            { id: 21, cat: "일식", name: "토모카츠", menu: "돈카츠 전문", time: 5, rating: 4.6, price: 13000 },
-            { id: 22, cat: "일식", name: "미요리", menu: "초밥, 사시미", time: 4, rating: 4.3, price: 18000 },
-            { id: 23, cat: "일식", name: "겐로쿠우동", menu: "지도리우동", time: 6, rating: 4.4, price: 10000 },
-            { id: 24, cat: "일식", name: "별리달리 (궁동)", menu: "돈까스, 덮밥", time: 13, rating: 4.5, price: 9000 },
-            { id: 25, cat: "일식", name: "쿠마카츠", menu: "돈까스 정식", time: 4, rating: 4.1, price: 12000 },
-            { id: 26, cat: "일식", name: "상무초밥", menu: "초밥 세트", time: 8, rating: 4.3, price: 15000 },
-            { id: 27, cat: "일식", name: "스시호산", menu: "오마카세", time: 10, rating: 4.9, price: 80000 },
-            { id: 28, cat: "일식", name: "킨토토", menu: "마제소바", time: 9, rating: 4.5, price: 11000 },
-            { id: 29, cat: "일식", name: "미소야", menu: "돈카츠, 알밥", time: 3, rating: 3.9, price: 10500 },
-            { id: 30, cat: "일식", name: "코코이찌방야", menu: "일본식 카레", time: 7, rating: 4.1, price: 11000 },
-
-            // 양식
-            { id: 31, cat: "양식", name: "리에바나", menu: "파스타, 스테이크", time: 5, rating: 4.4, price: 16000 },
-            { id: 32, cat: "양식", name: "에이트 (궁동)", menu: "수제버거", time: 12, rating: 4.6, price: 11000 },
-            { id: 33, cat: "양식", name: "더포", menu: "쌀국수, 월남쌈", time: 7, rating: 4.2, price: 12000 },
-            { id: 34, cat: "양식", name: "라쿠치나", menu: "이탈리안", time: 8, rating: 4.6, price: 22000 },
-            { id: 35, cat: "양식", name: "버거킹", menu: "와퍼", time: 6, rating: 4.0, price: 9500 },
-            { id: 36, cat: "양식", name: "서브웨이", menu: "샌드위치", time: 5, rating: 4.1, price: 8500 },
-            { id: 37, cat: "양식", name: "맘스터치", menu: "싸이버거", time: 3, rating: 4.0, price: 7500 },
-            { id: 38, cat: "양식", name: "르몽드", menu: "브런치", time: 7, rating: 4.3, price: 15000 },
-            { id: 39, cat: "양식", name: "보나베띠", menu: "파스타, 와인", time: 10, rating: 4.2, price: 19000 },
-            { id: 40, cat: "양식", name: "파스타에스", menu: "가성비 파스타", time: 4, rating: 3.9, price: 11000 },
-
-            // 분식
-            { id: 41, cat: "분식", name: "고봉민김밥", menu: "돈까스김밥", time: 3, rating: 4.0, price: 5000 },
-            { id: 42, cat: "분식", name: "신전떡볶이", menu: "매운 떡볶이", time: 4, rating: 4.1, price: 6000 },
-            { id: 43, cat: "분식", name: "엽기떡볶이", menu: "엽떡", time: 6, rating: 4.2, price: 9000 },
-            { id: 44, cat: "분식", name: "바르다김선생", menu: "김밥, 만두", time: 5, rating: 4.2, price: 7500 },
-            { id: 45, cat: "분식", name: "떡반집 (둔산)", menu: "토스트, 떡볶이", time: 15, rating: 4.6, price: 5500 },
-            { id: 46, cat: "분식", name: "얌샘김밥", menu: "모닥치기", time: 4, rating: 3.9, price: 8000 },
-            { id: 47, cat: "분식", name: "김가네", menu: "분식 모듬", time: 3, rating: 3.8, price: 7500 },
-            { id: 48, cat: "분식", name: "버무리", menu: "떡튀순", time: 5, rating: 4.0, price: 7000 },
-            { id: 49, cat: "분식", name: "죠스떡볶이", menu: "떡볶이 세트", time: 7, rating: 4.0, price: 6500 },
-            { id: 50, cat: "분식", name: "빨봉분식 (궁동)", menu: "치즈떡볶이", time: 13, rating: 4.1, price: 8500 }
+            // 전민동 (J)
+            { id: 55, area: "전민동", cat: "한식", name: "광세족발", menu: "족발", time: 12, rating: 4.7, price: 18000 },
+            
+            // 기타 (ETC - 죽동, 노은동 등)
+            { id: 10, area: "기타", cat: "한식", name: "명성각 (죽동)", menu: "짬뽕, 탕수육", time: 11, rating: 4.3, price: 10000 },
+            { id: 14, area: "기타", cat: "중식", name: "리원 (죽동)", menu: "코스요리, 짜장", time: 10, rating: 4.2, price: 11000 },
+            { id: 20, area: "기타", cat: "중식", name: "차이나공 (노은동)", menu: "딤섬, 코스", time: 14, rating: 4.4, price: 15000 },
+            { id: 45, area: "기타", cat: "분식", name: "떡반집 (둔산)", menu: "토스트, 떡볶이", time: 15, rating: 4.6, price: 5500 },
+            { id: 100, area: "도룡동", cat: "한식", name: "대장금", menu: "한정식", time: 8, rating: 4.5, price: 25000 },
+            { id: 101, area: "분식", cat: "분식", name: "고봉민김밥", menu: "돈까스김밥", time: 3, rating: 4.0, price: 5000 }
         ];
 
-        // --- STATE ---
-        let currentFilter = 'All';
+        let currentArea = '전체';
+        let currentCat = '전체';
+        let currentPriceRange = '전체';
         let activeId = null;
         let scatterChart = null;
 
@@ -182,17 +165,16 @@
             price: document.getElementById('stat-price'),
             rating: document.getElementById('stat-rating'),
             list: document.getElementById('res-list'),
-            filters: document.getElementById('filter-bar'),
+            areaBar: document.getElementById('area-bar'),
+            priceBar: document.getElementById('price-bar'),
+            filterBar: document.getElementById('filter-bar'),
             search: document.getElementById('search-box')
         };
 
-        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            renderFilters();
-            renderList(RESTAURANTS);
-            updateStats(RESTAURANTS);
+            renderFilterBars();
+            filterAll();
             initChart();
-
             dom.search.addEventListener('input', () => filterAll());
         });
 
@@ -200,75 +182,83 @@
             const term = dom.search.value.toLowerCase();
             const filtered = RESTAURANTS.filter(r => {
                 const matchSearch = r.name.toLowerCase().includes(term) || r.menu.toLowerCase().includes(term);
-                const matchCat = currentFilter === 'All' || r.cat === currentFilter;
-                return matchSearch && matchCat;
+                const matchArea = currentArea === '전체' || r.area === currentArea;
+                const matchCat = currentCat === '전체' || r.cat === currentCat;
+                
+                let matchPrice = true;
+                if (currentPriceRange === '1만원 미만') matchPrice = r.price < 10000;
+                else if (currentPriceRange === '1~2만원') matchPrice = r.price >= 10000 && r.price < 20000;
+                else if (currentPriceRange === '2~3만원') matchPrice = r.price >= 20000 && r.price < 30000;
+                else if (currentPriceRange === '3만원 이상') matchPrice = r.price >= 30000;
+
+                return matchSearch && matchArea && matchCat && matchPrice;
             });
             renderList(filtered);
             updateStats(filtered);
-            updateChart(filtered);
+            if (scatterChart) updateChart(filtered);
         }
 
-        function renderFilters() {
-            const cats = ['All', '한식', '중식', '일식', '양식', '분식'];
-            dom.filters.innerHTML = cats.map(c => `
-                <button onclick="applyFilter('${c}')" class="px-5 py-2.5 text-xs font-black rounded-2xl border whitespace-nowrap transition-all 
-                    ${currentFilter === c ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100' : 'bg-white text-slate-400 border-slate-100'}">
-                    ${c === 'All' ? '전체' : c}
+        function renderFilterBars() {
+            // Area Buttons
+            dom.areaBar.innerHTML = AREAS.map(a => `
+                <button onclick="applyArea('${a}')" class="px-4 py-1.5 text-[11px] font-black rounded-xl border whitespace-nowrap transition-all 
+                    ${currentArea === a ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400 border-slate-100'}">
+                    ${a}
+                </button>
+            `).join('');
+
+            // Price Range Buttons
+            dom.priceBar.innerHTML = PRICES.map(p => `
+                <button onclick="applyPrice('${p}')" class="px-4 py-1.5 text-[11px] font-black rounded-xl border whitespace-nowrap transition-all 
+                    ${currentPriceRange === p ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400 border-slate-100'}">
+                    ${p}
+                </button>
+            `).join('');
+
+            // Category Buttons
+            dom.filterBar.innerHTML = CATEGORIES.map(c => `
+                <button onclick="applyCat('${c}')" class="px-4 py-1.5 text-[11px] font-black rounded-xl border whitespace-nowrap transition-all 
+                    ${currentCat === c ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400 border-slate-100'}">
+                    ${c}
                 </button>
             `).join('');
         }
 
-        window.applyFilter = (c) => {
-            currentFilter = c;
-            renderFilters();
-            filterAll();
-        };
+        window.applyArea = (a) => { currentArea = a; renderFilterBars(); filterAll(); };
+        window.applyPrice = (p) => { currentPriceRange = p; renderFilterBars(); filterAll(); };
+        window.applyCat = (c) => { currentCat = c; renderFilterBars(); filterAll(); };
 
         function renderList(data) {
-            dom.list.innerHTML = data.map(res => `
-                <div id="card-${res.id}" onclick="toggleCard(${res.id})" class="res-card bg-white border border-slate-100 rounded-3xl p-5 cursor-pointer hover:shadow-md ${activeId === res.id ? 'active' : ''}">
+            dom.list.innerHTML = data.length > 0 ? data.map(res => `
+                <div onclick="toggleCard(${res.id})" class="res-card bg-white border border-slate-100 rounded-2xl p-4 cursor-pointer hover:shadow-md ${activeId === res.id ? 'active' : ''}">
                     <div class="flex justify-between items-start">
-                        <div class="space-y-1.5 flex-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase">${res.cat}</span>
-                                <span class="text-[9px] font-bold text-slate-400">차량 ${res.time}분</span>
+                        <div class="space-y-1 flex-1">
+                            <div class="flex gap-1 items-center">
+                                <span class="text-[8px] font-black text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full uppercase">${res.area}</span>
+                                <span class="text-[8px] font-bold text-slate-300">| ${res.cat}</span>
                             </div>
-                            <h4 class="font-bold text-slate-900 text-base">${res.name}</h4>
-                            <p class="text-xs text-slate-400 truncate">${res.menu}</p>
+                            <h4 class="font-bold text-slate-900 text-sm">${res.name}</h4>
+                            <p class="text-[10px] text-slate-400 truncate">${res.menu}</p>
                         </div>
                         <div class="text-right shrink-0">
-                            <p class="text-sm font-black text-blue-600">${res.price.toLocaleString()}원</p>
-                            <p class="text-xs font-bold text-yellow-500">★ ${res.rating}</p>
+                            <p class="text-xs font-black text-blue-600">${res.price.toLocaleString()}원</p>
+                            <p class="text-[10px] font-bold text-yellow-500">★ ${res.rating}</p>
                         </div>
                     </div>
-                    
-                    <div id="detail-${res.id}" class="${activeId === res.id ? 'block' : 'hidden'} mt-5 pt-5 border-t border-slate-100 animate-in fade-in slide-in-from-top-1">
-                        <div class="flex gap-2">
-                            <a href="https://map.naver.com/p/search/${encodeURIComponent(res.name)}" target="_blank" 
-                                class="flex-1 bg-[#03C75A] text-white py-3 rounded-2xl text-xs font-black text-center shadow-sm">네이버 지도</a>
-                            <a href="https://map.kakao.com/link/search/${encodeURIComponent(res.name)}" target="_blank" 
-                                class="flex-1 bg-[#FEE500] text-[#3A1D1D] py-3 rounded-2xl text-xs font-black text-center shadow-sm">카카오 맵</a>
+                    ${activeId === res.id ? `
+                        <div class="mt-4 pt-4 border-t border-slate-100 flex gap-2 animate-in fade-in slide-in-from-top-1">
+                            <a href="https://map.naver.com/p/search/${encodeURIComponent(res.name)}" target="_blank" class="flex-1 bg-[#03C75A] text-white py-2 rounded-xl text-[10px] font-black text-center">네이버</a>
+                            <a href="https://map.kakao.com/link/search/${encodeURIComponent(res.name)}" target="_blank" class="flex-1 bg-[#FEE500] text-[#3A1D1D] py-2 rounded-xl text-[10px] font-black text-center">카카오</a>
                         </div>
-                    </div>
+                    ` : ''}
                 </div>
-            `).join('');
+            `).join('') : '<div class="col-span-full py-10 text-center text-slate-300 text-xs">해당 조건의 식당이 없습니다.</div>';
         }
 
-        window.toggleCard = (id) => {
-            if (activeId === id) {
-                activeId = null;
-            } else {
-                activeId = id;
-            }
-            filterAll();
-        };
+        window.toggleCard = (id) => { activeId = activeId === id ? null : id; filterAll(); };
 
         function updateStats(data) {
-            if (data.length === 0) {
-                dom.price.textContent = "0";
-                dom.rating.textContent = "0.0";
-                return;
-            }
+            if (data.length === 0) { dom.price.textContent = "0"; dom.rating.textContent = "0.0"; return; }
             const avgP = Math.round(data.reduce((a, b) => a + b.price, 0) / data.length);
             const avgR = (data.reduce((a, b) => a + b.rating, 0) / data.length).toFixed(1);
             dom.price.textContent = avgP.toLocaleString();
@@ -282,41 +272,25 @@
                 data: {
                     datasets: [{
                         data: RESTAURANTS.map(r => ({ x: r.price, y: r.rating, name: r.name })),
-                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.4)',
                         borderColor: '#3B82F6',
                         borderWidth: 1,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
+                        pointRadius: 5
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { 
-                            title: { display: true, text: '평균 가격(원)', font: { size: 9, weight: 'bold' } },
-                            ticks: { font: { size: 8 } }
-                        },
-                        y: { 
-                            title: { display: true, text: '평점', font: { size: 9, weight: 'bold' } },
-                            min: 3.5, max: 5.0,
-                            ticks: { font: { size: 8 } }
-                        }
+                        x: { title: { display: true, text: '가격', font: { size: 8 } }, ticks: { font: { size: 8 } } },
+                        y: { title: { display: true, text: '평점', font: { size: 8 } }, min: 3.5, max: 5.0, ticks: { font: { size: 8 } } }
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `${ctx.raw.name}: ${ctx.raw.x.toLocaleString()}원 / ★${ctx.raw.y}`
-                            }
-                        }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
 
         function updateChart(data) {
-            if (!scatterChart) return;
             scatterChart.data.datasets[0].data = data.map(r => ({ x: r.price, y: r.rating, name: r.name }));
             scatterChart.update();
         }
