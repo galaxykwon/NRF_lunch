@@ -80,10 +80,16 @@ export default async function handler(req, res) {
     const results = await Promise.all(naverRequests);
     let allItems = [];
     MUST_HAVE.forEach(item => allItems.push(item));
+
     results.forEach(data => {
       if (data && data.items) {
         data.items.forEach(item => {
-          allItems.push({ name: item.title.replace(/<[^>]*>?/gm, ''), address: item.roadAddress || item.address, category: item.category, isVip: false });
+          allItems.push({ 
+            name: item.title.replace(/<[^>]*>?/gm, ''), 
+            address: item.roadAddress || item.address, 
+            category: item.category, 
+            isVip: false 
+          });
         });
       }
     });
@@ -95,10 +101,20 @@ export default async function handler(req, res) {
         if (!item.price) {
           const cat = item.category || "";
           const name = item.name;
-          if (['한우','소고기','참치','회','스시','오마카세','스테이크','석갈비'].some(w => name.includes(w) || cat.includes(w))) item.price = 35000;
-          else if (['파스타','피자','태국','아시아'].some(w => cat.includes(w))) item.price = 15000;
-          else if (['국밥','순대','찌개','백반','한식','분식','떡볶이','칼국수','국수'].some(w => name.includes(w) || cat.includes(w))) item.price = 9000;
-          else item.price = 12500;
+          
+          // [세심한 필터링] 고급 키워드가 있으면 무조건 비싼 가격대로 고정
+          if (['한정식', '오마카세', '코스', '한우', '소고기', '참치', '스시', '스테이크', '장어', '복어'].some(w => name.includes(w) || cat.includes(w))) {
+            item.price = 35000; 
+          } 
+          else if (['파스타', '피자', '태국', '아시아', '레스토랑'].some(w => cat.includes(w))) {
+            item.price = 16000;
+          }
+          else if (['국밥', '순대', '찌개', '백반', '한식', '분식', '떡볶이', '칼국수', '국수'].some(w => name.includes(w) || cat.includes(w))) {
+            item.price = 9000;
+          }
+          else {
+            item.price = 12500;
+          }
         }
         uniqueMap.set(key, item);
       }
