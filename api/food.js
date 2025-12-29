@@ -1,11 +1,16 @@
 const fetch = require('node-fetch');
+const { createClient } = require('@supabase/supabase-js');
 
 export default async function handler(req, res) {
   const NAVER_ID = 'Id2KWzmixu2C7UpDpkao';
   const NAVER_SECRET = 'd4sshbGFPj';
-  const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9'; // 카카오 REST API 키
+  const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9';
+  
+  // Supabase 설정 (사용자님의 정보를 그대로 사용)
+  const SB_URL = 'https://pbfgygmykizekzkzjrmo.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZmd5Z215a2l6ZWt6a3pqcm1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODkwMzcsImV4cCI6MjA4MjU2NTAzN30.EbZbSDhDfO8IYZq1vguctih8T_7ChDGpfsubP_mhCuY';
+  const supabase = createClient(SB_URL, SB_KEY);
 
-  // 사용자 지정 단골 리스트 (누락된 전민동 맛집 포함)
   const MUST_HAVE = [
     { name: '국영수 떡볶이', address: '전민동', category: '분식', price: 7000, isVip: true },
     { name: '행복한우리집', address: '전민동', category: '분식', price: 9000, isVip: true },
@@ -21,7 +26,7 @@ export default async function handler(req, res) {
     { name: '숨', address: '죽동', category: '일식', price: 15000, isVip: true },
     { name: '잇마이타이', address: '죽동', category: '기타타', price: 13000, isVip: true },
     { name: '아자스', address: '죽동', category: '일식', price: 15000, isVip: true },
-    { name: '곱창군', address: '죽동', category: '한식', price: 25000, isVip: true },
+    { name: '스시화', address: '신성동', category: '일식', price: 15000, isVip: true },
     { name: '오한순손수제비', address: '죽동', category: '한식', price: 11000, isVip: true },
     { name: '키우키우', address: '죽동', category: '양식', price: 16000, isVip: true },
     { name: '토시살롱', address: '죽동', category: '한식', price: 18000, isVip: true },
@@ -75,27 +80,33 @@ export default async function handler(req, res) {
   const locations = ['신성동', '도룡동', '죽동', '전민동', '어은동', '궁동', '만년동', '노은동'];
 
   try {
-    // 1. 네이버 실시간 검색
+    // 1. 직원 등록 맛집 가져오기 (Supabase)
+    const { data: userStores } = await supabase.from('my_stores').select('*');
+
+    // 2. 네이버 & 카카오 검색
     const naverRequests = locations.map(loc => 
       fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&display=15`, {
         headers: { 'X-Naver-Client-Id': NAVER_ID, 'X-Naver-Client-Secret': NAVER_SECRET }
       }).then(r => r.json()).catch(() => ({ items: [] }))
     );
 
-    // 2. 카카오 실시간 검색 (중요!)
     const kakaoRequests = locations.map(loc => 
-        fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&size=10`, {
-          headers: { 'Authorization': `KakaoAK ${KAKAO_KEY}` }
-        }).then(r => r.json()).catch(() => ({ documents: [] }))
-      );
+      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&size=10`, {
+        headers: { 'Authorization': `KakaoAK ${KAKAO_KEY}` }
+      }).then(r => r.json()).catch(() => ({ documents: [] }))
+    );
 
     const allResults = await Promise.all([...naverRequests, ...kakaoRequests]);
     
     let allItems = [];
     MUST_HAVE.forEach(item => allItems.push(item));
 
+    // 직원 등록 데이터 합치기 (VIP 표시 추가)
+    if (userStores) {
+      userStores.forEach(s => allItems.push({ ...s, isVip: true }));
+    }
+
     allResults.forEach(data => {
-      // 카카오 데이터 합치기
       if (data && data.documents) {
         data.documents.forEach(item => {
           allItems.push({ 
@@ -105,9 +116,7 @@ export default async function handler(req, res) {
             isVip: false 
           });
         });
-      } 
-      // 네이버 데이터 합치기
-      else if (data && data.items) {
+      } else if (data && data.items) {
         data.items.forEach(item => {
           allItems.push({ 
             name: item.title.replace(/<[^>]*>?/gm, ''), 
