@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie - 점메뉴 고민, 늘프가 골라드리겠습니다 </title>
+    <title>NRF Foodie - 점메뉴 고민, 늘프가 골라드리겠습니다</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -42,7 +42,7 @@
                 </div>
                 <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
             </div>
-            <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" alt="늘프" class="h-10 w-auto">
+            <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" referrerpolicy="no-referrer" alt="늘프" class="h-10 w-auto">
         </div>
     </header>
 
@@ -52,14 +52,14 @@
             <div class="relative z-10">
                 <div class="mb-4">
                     <h2 class="font-black text-xl mb-1 italic">점메추! 늘프의 PICK 🦕</h2>
-                    <p class="text-[11px] text-blue-100 font-medium" id="status-text">필터를 선택하고 아래 늘프를 눌러보세요.</p>
+                    <p class="text-[11px] text-blue-100 font-medium" id="status-text">연구단지 인근(20분 거리) 맛집을 골라드립니다.</p>
                 </div>
 
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
 
-                <button onclick="fetchAndPick()" id="action-btn" class="group w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+                <button id="action-btn" onclick="fetchAndPick()" class="group w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
                     <div id="btn-loader" class="loading-spinner hidden" style="border-top-color: #2563eb;"></div>
-                    <img id="nulph-icon" src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" alt="늘프" class="h-7 w-auto group-hover:rotate-12 transition-transform">
+                    <img id="nulph-icon" src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" alt="늘프" class="h-7 w-auto group-hover:rotate-12 transition-transform">
                     <span id="btn-label">오늘의 운명 결정하기</span>
                 </button>
             </div>
@@ -94,7 +94,6 @@
     </main>
 
     <script>
-        // 기본 데이터 (신성동 실존 맛집 위주)
         const STATIC_DATA = [
             { id: 1, name: "숯골원냉면", area: "신성동", cat: "한식", menu: "평양냉면, 꿩냉면", price: 11000, score: 4.5, isRealTime: false },
             { id: 2, name: "천리집", area: "신성동", cat: "한식", menu: "순대국밥", price: 9000, score: 4.6, isRealTime: false },
@@ -166,33 +165,41 @@
             `).join('');
         }
 
-        // 실시간 데이터를 긁어온 후, 랜덤으로 3개를 뽑아주는 메인 함수
         async function fetchAndPick() {
             const btn = document.getElementById('action-btn'), status = document.getElementById('status-text');
             const recArea = document.getElementById('recommend-area'), loader = document.getElementById('btn-loader'), img = document.getElementById('nulph-icon');
 
             loader.classList.remove('hidden'); img.classList.add('hidden');
-            btn.disabled = true; status.innerText = "늘프가 실시간 데이터를 분석 중입니다...";
+            btn.disabled = true; status.innerText = "연구단지 인근 맛집 탐색 중...";
 
             try {
-                let query = '대전 연구단지 맛집';
-                if (fArea !== '전체') query = `대전 ${fArea} 맛집`;
+                // 쿼리에 '유성구'를 명시하여 타 지역(자양동 등) 검색 방지
+                let query = '대전 유성구 연구단지 맛집';
+                if (fArea !== '전체') query = `대전 유성구 ${fArea} 맛집`;
                 if (fCat !== '전체') query += ` ${fCat}`;
 
                 const response = await fetch(`/api/search?keyword=${encodeURIComponent(query)}`);
                 const data = await response.json();
 
                 if (data.items) {
-                    const realItems = data.items.map((item, idx) => ({
-                        id: Date.now() + idx,
-                        name: item.title.replace(/<[^>]*>?/gm, ''),
-                        area: detectArea(item.roadAddress || item.address),
-                        cat: item.category.split('>')[0] || '기타',
-                        menu: item.category,
-                        price: 12000, // API 가격 미제공으로 기본값
-                        score: (Math.random() * 0.4 + 4.3).toFixed(1),
-                        isRealTime: true
-                    }));
+                    const realItems = data.items
+                        .map((item, idx) => {
+                            const area = detectArea(item.roadAddress || item.address);
+                            return {
+                                id: Date.now() + idx,
+                                name: item.title.replace(/<[^>]*>?/gm, ''),
+                                area: area,
+                                cat: item.category.split('>')[0] || '기타',
+                                menu: item.category,
+                                price: 12000,
+                                score: (Math.random() * 0.4 + 4.3).toFixed(1),
+                                isRealTime: true,
+                                fullAddress: item.address
+                            };
+                        })
+                        // 연구단지 외 지역(동구, 중구 등) 데이터는 리스트에서 원천 배제
+                        .filter(item => item.area !== '기타' || item.fullAddress.includes('유성구'));
+
                     currentData = [...realItems, ...STATIC_DATA];
                     const pool = filterAndRender();
 
@@ -206,11 +213,11 @@
                                 <div class="font-black text-[11px] truncate text-white">${p.name}</div>
                             </div>
                         `).join('');
-                        status.innerText = "늘프의 점심 제안이 도착했습니다!";
+                        status.innerText = "늘프가 근처 맛집으로만 골랐습니다!";
                     }
                 }
             } catch (e) {
-                status.innerText = "서버 연결이 불안정하여 로컬에서 골라드릴게요!";
+                status.innerText = "로컬 데이터를 활용하여 골라드릴게요!";
                 const pool = filterAndRender();
                 const picks = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
                 recArea.classList.remove('hidden');
@@ -227,6 +234,8 @@
             if (addr.includes('죽동')) return '죽동';
             if (addr.includes('전민동')) return '전민동';
             if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
+            // 유성구 내 다른 동네(가정동, 구성동 등)도 인정
+            if (addr.includes('유성구')) return '유성구';
             return '기타';
         }
     </script>
