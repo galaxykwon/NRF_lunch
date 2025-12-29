@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie - 대전 연구단지 실시간 맛집</title>
+    <title>NRF Foodie - 점메뉴 고민, 늘프가 골라드리겠습니다 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -20,7 +20,7 @@
         .loading-spinner {
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top: 3px solid #3B82F6;
+            border-top: 3px solid #fff;
             width: 20px;
             height: 20px;
             animation: spin 1s linear infinite;
@@ -35,33 +35,32 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2.5" onclick="location.reload()">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-100">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </div>
-                <div>
-                    <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE</span></h1>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Real-time GPS Guide</p>
-                </div>
+                <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
             </div>
-            <div class="bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100 font-bold text-[10px] text-slate-500">LIVE CONNECTED</div>
+            <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" alt="늘프" class="h-10 w-auto">
         </div>
     </header>
 
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
 
-        <section class="bg-slate-900 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
+        <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <div class="mb-6">
-                    <h2 class="font-black text-xl mb-1">오늘 점심은 늘프와 함께! 🦕</h2>
-                    <p class="text-xs text-slate-400 font-medium" id="status-text">네이버 지도의 실시간 정보를 검색합니다.</p>
+                <div class="mb-4">
+                    <h2 class="font-black text-xl mb-1 italic">점메추! 늘프의 PICK 🦕</h2>
+                    <p class="text-[11px] text-blue-100 font-medium" id="status-text">필터를 선택하고 아래 늘프를 눌러보세요.</p>
                 </div>
 
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
 
-                <button onclick="fetchRealTimeLunch()" id="action-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <span>🎲 실시간 맛집 분석 & 추천</span>
+                <button onclick="fetchAndPick()" id="action-btn" class="group w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+                    <div id="btn-loader" class="loading-spinner hidden" style="border-top-color: #2563eb;"></div>
+                    <img id="nulph-icon" src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" alt="늘프" class="h-7 w-auto group-hover:rotate-12 transition-transform">
+                    <span id="btn-label">오늘의 운명 결정하기</span>
                 </button>
             </div>
             <div class="absolute -bottom-10 -right-10 text-[10rem] opacity-10 rotate-12">🍱</div>
@@ -69,20 +68,25 @@
 
         <section class="space-y-4">
             <div class="sticky top-[65px] z-40 bg-[#F8FAFC]/95 backdrop-blur-md py-2 space-y-3">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar" id="area-filter"></div>
-                <div class="relative">
-                    <input type="text" id="search-input" placeholder="메뉴나 식당을 직접 검색해보세요" 
-                        class="w-full bg-white border-2 border-slate-100 rounded-2xl py-3.5 pl-5 pr-12 text-sm focus:outline-none focus:border-blue-500 transition-all shadow-sm font-medium">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">🔍</div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Neighborhood</span>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="area-filter"></div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Price Range</span>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="price-filter"></div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Category</span>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div>
                 </div>
             </div>
 
             <div class="flex justify-between items-center px-1">
                 <h3 class="font-black text-slate-900 text-sm italic">REST-LIST <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
-                <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Live Syncing</span>
-                </div>
+                <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Live Active
+                </span>
             </div>
 
             <div id="restaurant-list" class="space-y-4"></div>
@@ -90,33 +94,58 @@
     </main>
 
     <script>
-        // 1. 기본 백업 데이터 (API 실패 시 사용)
+        // 기본 데이터 (신성동 실존 맛집 위주)
         const STATIC_DATA = [
-            { id: 1, name: "숯골원냉면", area: "신성동", cat: "한식", menu: "평양냉면, 꿩냉면", score: 4.5, isRealTime: false },
-            { id: 2, name: "천리집", area: "신성동", cat: "한식", menu: "순대국밥", score: 4.6, isRealTime: false },
-            { id: 10, name: "오씨칼국수", area: "도룡동", cat: "한식", menu: "물총칼국수", score: 4.2, isRealTime: false }
+            { id: 1, name: "숯골원냉면", area: "신성동", cat: "한식", menu: "평양냉면, 꿩냉면", price: 11000, score: 4.5, isRealTime: false },
+            { id: 2, name: "천리집", area: "신성동", cat: "한식", menu: "순대국밥", price: 9000, score: 4.6, isRealTime: false },
+            { id: 3, name: "김판순김치찌개", area: "신성동", cat: "한식", menu: "김치찌개", price: 10000, score: 4.4, isRealTime: false },
+            { id: 4, name: "토모카츠", area: "신성동", cat: "일식", menu: "돈카츠", price: 14000, score: 4.7, isRealTime: false }
         ];
 
         let currentData = [...STATIC_DATA];
-        let filterArea = '전체';
-        const areas = ['전체', '신성동', '도룡동', '죽동', '어은동', '전민동'];
+        let fArea = '전체', fPrice = '전체', fCat = '전체';
+
+        const areas = ['전체', '신성동', '도룡동', '죽동', '어은동(궁동)', '전민동', '기타'];
+        const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
+        const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
 
         document.addEventListener('DOMContentLoaded', () => {
             renderFilters();
-            renderList(currentData);
-            document.getElementById('search-input').addEventListener('input', filterRestaurants);
+            filterAndRender();
         });
 
         function renderFilters() {
-            document.getElementById('area-filter').innerHTML = areas.map(a => 
-                `<button onclick="setArea('${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${filterArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`
-            ).join('');
+            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
+            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
+            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
+        }
+
+        function setFilter(type, val) {
+            if(type === 'area') fArea = val;
+            if(type === 'price') fPrice = val;
+            if(type === 'cat') fCat = val;
+            renderFilters();
+            filterAndRender();
+        }
+
+        function filterAndRender() {
+            const filtered = currentData.filter(i => {
+                const mA = fArea === '전체' || i.area === fArea;
+                const mC = fCat === '전체' || i.cat === fCat;
+                let mP = true;
+                if(fPrice === '1만원 미만') mP = i.price < 10000;
+                else if(fPrice === '1~2만원') mP = i.price >= 10000 && i.price < 20000;
+                else if(fPrice === '2~3만원') mP = i.price >= 20000 && i.price < 30000;
+                else if(fPrice === '3만원 이상') mP = i.price >= 30000;
+                return mA && mC && mP;
+            });
+            renderList(filtered);
+            return filtered;
         }
 
         function renderList(list) {
             const container = document.getElementById('restaurant-list');
             document.getElementById('count-badge').innerText = list.length;
-            
             container.innerHTML = list.map(item => `
                 <div class="res-card bg-white p-5 border border-slate-100 shadow-sm flex justify-between items-center" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
                     <div class="space-y-1.5 flex-1 pr-4">
@@ -137,72 +166,58 @@
             `).join('');
         }
 
-        function setArea(a) { filterArea = a; renderFilters(); filterRestaurants(); }
+        // 실시간 데이터를 긁어온 후, 랜덤으로 3개를 뽑아주는 메인 함수
+        async function fetchAndPick() {
+            const btn = document.getElementById('action-btn'), status = document.getElementById('status-text');
+            const recArea = document.getElementById('recommend-area'), loader = document.getElementById('btn-loader'), img = document.getElementById('nulph-icon');
 
-        function filterRestaurants() {
-            const kw = document.getElementById('search-input').value.toLowerCase();
-            const filtered = currentData.filter(i => {
-                const mA = filterArea === '전체' || i.area === filterArea;
-                const mS = i.name.toLowerCase().includes(kw) || i.menu.toLowerCase().includes(kw);
-                return mA && mS;
-            });
-            renderList(filtered);
-        }
-
-        // --- 실시간 API 호출 로직 (중요) ---
-        async function fetchRealTimeLunch() {
-            const btn = document.getElementById('action-btn');
-            const status = document.getElementById('status-text');
-            const recArea = document.getElementById('recommend-area');
-
-            btn.disabled = true;
-            btn.innerHTML = `<div class="loading-spinner"></div><span class="ml-2">네이버 데이터 수신 중...</span>`;
-            status.innerText = "연구단지 주변의 최신 맛집 정보를 긁어오고 있습니다.";
+            loader.classList.remove('hidden'); img.classList.add('hidden');
+            btn.disabled = true; status.innerText = "늘프가 실시간 데이터를 분석 중입니다...";
 
             try {
                 let query = '대전 연구단지 맛집';
-                if (filterArea !== '전체') query = `대전 ${filterArea} 맛집`;
-                
-                // 1. API 호출
+                if (fArea !== '전체') query = `대전 ${fArea} 맛집`;
+                if (fCat !== '전체') query += ` ${fCat}`;
+
                 const response = await fetch(`/api/search?keyword=${encodeURIComponent(query)}`);
-                if (!response.ok) throw new Error('Network Error');
                 const data = await response.json();
 
-                // 2. 받은 데이터가 있을 경우 처리
-                if (data.items && data.items.length > 0) {
-                    const realTimeItems = data.items.map((item, idx) => {
-                        const cleanName = item.title.replace(/<[^>]*>?/gm, '');
-                        return {
-                            id: Date.now() + idx,
-                            name: cleanName,
-                            area: detectArea(item.roadAddress || item.address),
-                            cat: (item.category && item.category.split('>')[0]) || '식당',
-                            menu: item.category || "상세 정보 없음",
-                            score: (Math.random() * 0.4 + 4.4).toFixed(1),
-                            isRealTime: true // ★ 여기서 강제로 TRUE 부여
-                        };
-                    });
+                if (data.items) {
+                    const realItems = data.items.map((item, idx) => ({
+                        id: Date.now() + idx,
+                        name: item.title.replace(/<[^>]*>?/gm, ''),
+                        area: detectArea(item.roadAddress || item.address),
+                        cat: item.category.split('>')[0] || '기타',
+                        menu: item.category,
+                        price: 12000, // API 가격 미제공으로 기본값
+                        score: (Math.random() * 0.4 + 4.3).toFixed(1),
+                        isRealTime: true
+                    }));
+                    currentData = [...realItems, ...STATIC_DATA];
+                    const pool = filterAndRender();
 
-                    // 실시간 데이터를 최상단에 배치
-                    currentData = [...realTimeItems, ...STATIC_DATA];
-                    filterRestaurants();
-
-                    // 추천 박스 표시
-                    recArea.classList.remove('hidden');
-                    recArea.innerHTML = realTimeItems.slice(0, 3).map((p, i) => `
-                        <div class="bg-blue-500/20 p-3 rounded-2xl border border-blue-400/30 text-center pick-animate">
-                            <div class="text-[9px] font-black text-blue-200 mb-1 tracking-widest">${i+1} PICK</div>
-                            <div class="font-black text-[11px] truncate text-white">${p.name}</div>
-                        </div>
-                    `).join('');
-                    status.innerText = `'${query}' 실시간 분석 완료!`;
+                    if(pool.length > 0) {
+                        const shuffled = [...pool].sort(() => 0.5 - Math.random());
+                        const picks = shuffled.slice(0, 3);
+                        recArea.classList.remove('hidden');
+                        recArea.innerHTML = picks.map((p, i) => `
+                            <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-animate shadow-lg" style="animation-delay: ${i * 0.1}s">
+                                <div class="text-[9px] font-black text-blue-100 mb-1 tracking-widest">${i+1} PICK</div>
+                                <div class="font-black text-[11px] truncate text-white">${p.name}</div>
+                            </div>
+                        `).join('');
+                        status.innerText = "늘프의 점심 제안이 도착했습니다!";
+                    }
                 }
             } catch (e) {
-                console.error(e);
-                status.innerText = "연결 지연으로 로컬 데이터를 활용합니다.";
+                status.innerText = "서버 연결이 불안정하여 로컬에서 골라드릴게요!";
+                const pool = filterAndRender();
+                const picks = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
+                recArea.classList.remove('hidden');
+                recArea.innerHTML = picks.map((p, i) => `<div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-animate shadow-lg"><div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div><div class="font-black text-[11px] truncate text-white">${p.name}</div></div>`).join('');
             } finally {
+                loader.classList.add('hidden'); img.classList.remove('hidden');
                 btn.disabled = false;
-                btn.innerHTML = `<span>🎲 실시간 분석 완료 (다시하기)</span>`;
             }
         }
 
@@ -211,8 +226,8 @@
             if (addr.includes('도룡동')) return '도룡동';
             if (addr.includes('죽동')) return '죽동';
             if (addr.includes('전민동')) return '전민동';
-            if (addr.includes('어은동') || addr.includes('궁동')) return '어은동';
-            return '연구단지';
+            if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
+            return '기타';
         }
     </script>
 </body>
