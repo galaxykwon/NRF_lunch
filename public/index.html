@@ -19,6 +19,7 @@
         .star-rating { display: flex; gap: 6px; color: #cbd5e1; cursor: pointer; font-size: 18px; }
         .star-rating .active { color: #facc15; }
         .star-rating span:hover { transform: scale(1.2); transition: 0.1s; }
+        footer p { line-height: 1.6; }
     </style>
 </head>
 <body class="text-slate-800 pb-24">
@@ -59,7 +60,17 @@
             <div id="restaurant-list" class="space-y-4"></div>
         </section>
 
-        <footer class="py-10 text-center"><p class="text-[10px] text-slate-300 font-medium tracking-widest uppercase">Designed by Galaxy</p></footer>
+        <footer class="py-12 px-6 text-center space-y-4">
+            <div class="bg-slate-100/50 p-5 rounded-3xl">
+                <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-tighter">⭐ 별점 부여 원리</p>
+                <p class="text-[10px] text-slate-400 font-medium">
+                    본 앱의 별점은 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다. <br>
+                    리뷰가 없는 식당은 늘프가 분석한 기본 점수가 부여되며, <br>
+                    임직원분들의 소중한 한줄평과 별점이 쌓일수록 더욱 정확한 맛집 지도가 완성됩니다.
+                </p>
+            </div>
+            <p class="text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase">Designed by Galaxy</p>
+        </footer>
     </main>
 
     <script>
