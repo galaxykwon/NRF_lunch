@@ -3,8 +3,12 @@ const fetch = require('node-fetch');
 export default async function handler(req, res) {
   const NAVER_ID = 'Id2KWzmixu2C7UpDpkao';
   const NAVER_SECRET = 'd4sshbGFPj';
+  const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9'; // 카카오 REST API 키
 
+  // 사용자 지정 단골 리스트 (누락된 전민동 맛집 포함)
   const MUST_HAVE = [
+    { name: '국영수 떡볶이', address: '전민동', category: '분식', price: 7000, isVip: true },
+    { name: '행복한우리집', address: '전민동', category: '분식', price: 9000, isVip: true },
     { name: '팔복집', address: '신성동', category: '한식', price: 9000, isVip: true },
     { name: '천리집', address: '신성동', category: '한식', price: 9000, isVip: true },
     { name: '낭랑', address: '신성동', category: '중식', price: 9000, isVip: true },
@@ -15,7 +19,7 @@ export default async function handler(req, res) {
     { name: '오씨칼국수', address: '도룡동', category: '한식', price: 9000, isVip: true },
     { name: '유성불백', address: '도룡동', category: '한식', price: 11000, isVip: true },
     { name: '숨', address: '죽동', category: '일식', price: 15000, isVip: true },
-    { name: '잇마이타이', address: '죽동', category: '양식', price: 13000, isVip: true },
+    { name: '잇마이타이', address: '죽동', category: '기타타', price: 13000, isVip: true },
     { name: '아자스', address: '죽동', category: '일식', price: 15000, isVip: true },
     { name: '곱창군', address: '죽동', category: '한식', price: 25000, isVip: true },
     { name: '오한순손수제비', address: '죽동', category: '한식', price: 11000, isVip: true },
@@ -68,21 +72,42 @@ export default async function handler(req, res) {
     { name: '영칼로리포케', address: '신성동', category: '기타', price: 12000, isVip: true }
   ];
 
-  const locations = ['신성동', '도룡동', '죽동', '전민동', '어은동', '궁동', '만년동', '노은동', '반석동'];
+  const locations = ['신성동', '도룡동', '죽동', '전민동', '어은동', '궁동', '만년동', '노은동'];
 
   try {
+    // 1. 네이버 실시간 검색
     const naverRequests = locations.map(loc => 
-      fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 유성구 ' + loc + ' 맛집')}&display=20`, {
+      fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&display=15`, {
         headers: { 'X-Naver-Client-Id': NAVER_ID, 'X-Naver-Client-Secret': NAVER_SECRET }
       }).then(r => r.json()).catch(() => ({ items: [] }))
     );
 
-    const results = await Promise.all(naverRequests);
+    // 2. 카카오 실시간 검색 (중요!)
+    const kakaoRequests = locations.map(loc => 
+        fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&size=10`, {
+          headers: { 'Authorization': `KakaoAK ${KAKAO_KEY}` }
+        }).then(r => r.json()).catch(() => ({ documents: [] }))
+      );
+
+    const allResults = await Promise.all([...naverRequests, ...kakaoRequests]);
+    
     let allItems = [];
     MUST_HAVE.forEach(item => allItems.push(item));
 
-    results.forEach(data => {
-      if (data && data.items) {
+    allResults.forEach(data => {
+      // 카카오 데이터 합치기
+      if (data && data.documents) {
+        data.documents.forEach(item => {
+          allItems.push({ 
+            name: item.place_name, 
+            address: item.road_address_name || item.address_name, 
+            category: item.category_name, 
+            isVip: false 
+          });
+        });
+      } 
+      // 네이버 데이터 합치기
+      else if (data && data.items) {
         data.items.forEach(item => {
           allItems.push({ 
             name: item.title.replace(/<[^>]*>?/gm, ''), 
@@ -101,17 +126,13 @@ export default async function handler(req, res) {
         if (!item.price) {
           const cat = item.category || "";
           const name = item.name;
-          
           if (['한정식', '오마카세', '코스', '한우', '소고기', '참치', '스시', '스테이크', '장어', '복어'].some(w => name.includes(w) || cat.includes(w))) {
             item.price = 35000; 
-          } 
-          else if (['파스타', '피자', '태국', '아시아', '레스토랑'].some(w => cat.includes(w))) {
+          } else if (['파스타', '피자', '태국', '아시아', '레스토랑'].some(w => cat.includes(w))) {
             item.price = 16000;
-          }
-          else if (['국밥', '순대', '찌개', '백반', '한식', '분식', '떡볶이', '칼국수', '국수'].some(w => name.includes(w) || cat.includes(w))) {
+          } else if (['국밥', '순대', '찌개', '백반', '한식', '분식', '떡볶이', '칼국수', '국수'].some(w => name.includes(w) || cat.includes(w))) {
             item.price = 9000;
-          }
-          else {
+          } else {
             item.price = 12500;
           }
         }
