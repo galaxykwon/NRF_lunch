@@ -37,13 +37,13 @@
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
                 <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 늘프가 골라드릴게요!</h2>
-                <p class="text-xs text-blue-100 font-bold mb-6 opacity-90" id="day-theme-sub">동네 맛집을 불러오는 중...</p>
+                <p class="text-xs text-blue-100 font-bold mb-6 opacity-90" id="day-theme-sub">로딩 중...</p>
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
                     <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
                     <span>운명의 메뉴 한 끼 뽑기</span>
                 </button>
-                <p class="text-[10px] text-blue-200 mt-4 text-center font-medium" id="status-text">데이터를 동기화하고 있습니다.</p>
+                <p class="text-[10px] text-blue-200 mt-4 text-center font-medium" id="status-text">데이터 동기화 중...</p>
             </div>
         </section>
 
@@ -58,6 +58,10 @@
             </div>
             <div id="restaurant-list" class="space-y-4"></div>
         </section>
+
+        <footer class="py-10 text-center">
+            <p class="text-[10px] text-slate-300 font-medium tracking-widest uppercase">Designed by Galaxy</p>
+        </footer>
     </main>
 
     <script>
@@ -73,7 +77,7 @@
 
         function setDayTheme() {
             const day = new Date().getDay();
-            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화끈하게 화이팅! 🔥", "수수하게 백반 어때요? 🍚", "국물 요리가 땡기는 목요일! 🍲", "멀리 나가는 금요일! 🚗", "행복한 토요일! 🍕"];
+            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화끈하게 화이팅! 🔥", "수수하게 백반 어때요? 🍚", "목요일은 국물 요리! 🍲", "멀리 나가는 금요일! 🚗", "행복한 토요일! 🍕"];
             document.getElementById('day-theme-sub').innerText = themes[day];
         }
 
@@ -83,51 +87,47 @@
                 const response = await fetch(`/api/food`);
                 const data = await response.json();
                 if (data.items) {
-                    currentData = data.items.map((item, idx) => {
-                        const sCat = simplifyCategory(item.category);
-                        const checkString = (item.name + item.category).replace(/\s/g, '');
-                        let calcPrice = 12500;
-                        if (['한우','소고기','참치','회','스시','스테이크'].some(w => checkString.includes(w))) calcPrice = 45000;
-                        else if (['국밥','해장국','짜장','짬뽕','분식','떡볶이'].some(w => checkString.includes(w))) calcPrice = 9000;
-
-                        return { name: item.name, area: detectAreaRaw(item.address), cat: sCat, menu: item.category.replace(/>/g, ' '), price: calcPrice, score: (4.9 - (idx * 0.002) - (Math.random() * 0.1)).toFixed(1) };
-                    });
+                    currentData = data.items.map(item => ({
+                        ...item,
+                        area: detectAreaRaw(item.address),
+                        cat: simplifyCategory(item.category),
+                        score: (4.9 - (Math.random() * 0.5)).toFixed(1)
+                    }));
                     filterAndRender();
-                    status.innerText = `늘프가 ${currentData.length}개 식당을 준비해보았어요. 😊`;
+                    status.innerText = `늘프가 ${currentData.length}개 식당을 준비했어요! 😊`;
                 }
-            } catch (e) { status.innerText = "데이터 로딩 오류"; }
+            } catch (e) { status.innerText = "로딩 오류"; }
         }
 
         async function saveReview(resName) {
-            const safeId = resName.replace(/\s/g, '');
-            const input = document.getElementById(`input-${safeId}`);
+            const input = document.getElementById(`input-${resName.replace(/\s/g, '')}`);
             const comment = input.value.trim();
             if(!comment) return alert("내용을 입력해주세요!");
-
             const { error } = await supabaseClient.from('reviews').insert([{ restaurant_name: resName, comment: comment, rating: 5 }]);
-            if(error) {
-                console.error(error);
-                alert("등록 실패: 테이블 설정(Column 이름 등)을 확인해주세요.");
-            } else {
-                alert("등록 완료!");
-                input.value = "";
-                filterAndRender();
-            }
+            if(error) alert("등록 실패");
+            else { alert("등록 완료!"); input.value = ""; filterAndRender(); }
         }
 
-        async function filterAndRender() {
+        function filterAndRender() {
             const searchVal = document.getElementById('search-input').value.toLowerCase();
             const filtered = currentData.filter(i => {
                 const mA = fArea === '전체' || i.area === fArea;
                 const mC = fCat === '전체' || i.cat === fCat;
                 const mS = i.name.toLowerCase().includes(searchVal);
-                return mA && mC && mS;
+                let mP = true;
+                if (fPrice === '1만원 미만') mP = i.price < 10000;
+                else if (fPrice === '1~2만원') mP = i.price >= 10000 && i.price < 20000;
+                else if (fPrice === '2~3만원') mP = i.price >= 20000 && i.price < 30000;
+                else if (fPrice === '3만원 이상') mP = i.price >= 30000;
+                return mA && mC && mS && mP;
             }).sort((a,b) => b.score - a.score);
             
-            // 400 에러 방지를 위해 .order 구문 제거
-            const { data: reviews, error } = await supabaseClient.from('reviews').select('*');
-            if (error) console.error("리뷰 불러오기 실패:", error);
-            
+            fetchReviewsAndRender(filtered);
+            renderFilters();
+        }
+
+        async function fetchReviewsAndRender(filtered) {
+            const { data: reviews } = await supabaseClient.from('reviews').select('*');
             renderList(filtered, reviews || []);
         }
 
@@ -141,8 +141,8 @@
                     <div class="flex justify-between items-center mb-3" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
                         <div class="flex-1 pr-4">
                             <div class="flex gap-2 items-center mb-1"><span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span></div>
-                            <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
-                            <p class="text-[11px] text-slate-400 font-medium truncate">${item.menu}</p>
+                            <h3 class="font-black text-slate-900 text-base">${item.name}</h3>
+                            <p class="text-[11px] text-slate-400 truncate">${item.category}</p>
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-blue-600 font-black text-lg">★ ${item.score}</div>
@@ -150,9 +150,9 @@
                         </div>
                     </div>
                     <div class="review-box">
-                        <div class="review-items">${myReviews.length > 0 ? myReviews.slice(-3).map(r => `<div class="review-item"><span>💬</span><span>${r.comment}</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">임직원 첫 리뷰를 남겨주세요!</div>'}</div>
+                        <div class="review-items">${myReviews.length > 0 ? myReviews.slice(-3).map(r => `<div class="review-item"><span>💬</span><span>${r.comment}</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">첫 리뷰를 남겨주세요!</div>'}</div>
                         <div class="review-input-group">
-                            <input type="text" id="input-${safeId}" placeholder="20자 한줄평..." maxlength="20">
+                            <input type="text" id="input-${safeId}" placeholder="한줄평..." maxlength="20">
                             <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button>
                         </div>
                     </div>
@@ -161,13 +161,13 @@
         }
 
         function detectAreaRaw(addr) {
-            if (addr.includes('신성동') || addr.includes('자운동') || addr.includes('화암동')) return '신성동';
-            if (addr.includes('도룡동')) return '도룡동';
-            if (addr.includes('죽동')) return '죽동';
-            if (addr.includes('전민동') || addr.includes('문지동')) return '전민동';
-            if (addr.includes('어은동') || addr.includes('궁동') || addr.includes('봉명동')) return '어은/궁동/봉명';
-            if (addr.includes('노은동') || addr.includes('반석동') || addr.includes('지족동')) return '노은/반석';
-            if (addr.includes('만년동') || addr.includes('둔산동')) return '만년/둔산';
+            if (addr === '신성동' || addr.includes('신성동') || addr.includes('자운동') || addr.includes('화암동')) return '신성동';
+            if (addr === '도룡동' || addr.includes('도룡동')) return '도룡동';
+            if (addr === '죽동' || addr.includes('죽동')) return '죽동';
+            if (addr === '전민동' || addr.includes('전민동') || addr.includes('문지동')) return '전민동';
+            if (addr === '어은동' || addr === '궁동' || addr === '봉명동' || addr.includes('어은') || addr.includes('궁동') || addr.includes('봉명')) return '어은/궁동/봉명';
+            if (addr === '노은동' || addr === '반석동' || addr.includes('노은') || addr.includes('반석') || addr.includes('지족')) return '노은/반석';
+            if (addr === '만년동' || addr === '둔산동' || addr.includes('만년') || addr.includes('둔산')) return '만년/둔산';
             return '기타';
         }
 
@@ -187,10 +187,8 @@
         }
 
         function setFilter(type, val) { 
-            if(type === 'area') fArea = val; 
-            if(type === 'price') fPrice = val; 
-            if(type === 'cat') fCat = val; 
-            renderFilters(); filterAndRender(); 
+            if(type === 'area') fArea = val; if(type === 'price') fPrice = val; if(type === 'cat') fCat = val; 
+            filterAndRender(); 
         }
 
         function getRandomPick() {
@@ -203,7 +201,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => { setDayTheme(); renderFilters(); deepFetchData(); });
+        document.addEventListener('DOMContentLoaded', () => { setDayTheme(); deepFetchData(); });
     </script>
 </body>
 </html>
