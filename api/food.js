@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   const NAVER_ID = 'Id2KWzmixu2C7UpDpkao';
   const NAVER_SECRET = 'd4sshbGFPj';
 
-  // 1. 사용자 지정 단골 리스트 (이름, 지역, 카테고리, 가격 지정 + VIP 표시)
   const MUST_HAVE = [
     { name: '팔복집', address: '신성동', category: '한식', price: 9000, isVip: true },
     { name: '천리집', address: '신성동', category: '한식', price: 9000, isVip: true },
@@ -80,18 +79,11 @@ export default async function handler(req, res) {
 
     const results = await Promise.all(naverRequests);
     let allItems = [];
-    
     MUST_HAVE.forEach(item => allItems.push(item));
-
     results.forEach(data => {
       if (data && data.items) {
         data.items.forEach(item => {
-          allItems.push({
-            name: item.title.replace(/<[^>]*>?/gm, ''),
-            address: item.roadAddress || item.address,
-            category: item.category,
-            isVip: false // 일반 식당 표시
-          });
+          allItems.push({ name: item.title.replace(/<[^>]*>?/gm, ''), address: item.roadAddress || item.address, category: item.category, isVip: false });
         });
       }
     });
@@ -112,9 +104,7 @@ export default async function handler(req, res) {
       }
     });
 
-    // 최종 결과 랜덤하게 섞기
     const finalItems = Array.from(uniqueMap.values()).sort(() => Math.random() - 0.5);
-
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.status(200).json({ items: finalItems });
   } catch (error) {
