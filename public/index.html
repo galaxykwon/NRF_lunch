@@ -18,9 +18,6 @@
         .review-input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         .star-rating { display: flex; gap: 6px; color: #cbd5e1; cursor: pointer; font-size: 18px; }
         .star-rating .active { color: #facc15; }
-        footer p { line-height: 1.6; }
-        
-        /* 제보 모달 스타일 */
         #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 2rem; padding: 2rem; }
     </style>
@@ -73,28 +70,12 @@
     </main>
 
     <div id="add-modal" onclick="if(event.target === this) this.style.display='none'">
-        <div class="modal-content shadow-2xl animate-bounce-in">
+        <div class="modal-content shadow-2xl">
             <h3 class="font-black text-xl mb-4">맛집 제보하기 🍱</h3>
             <div class="space-y-3">
-                <input type="text" id="new-res-name" placeholder="식당 이름 (예: 팔복집)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 transition-all">
-                <select id="new-res-area" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 appearance-none">
-                    <option value="">지역 선택</option>
-                    <option value="신성동">신성동</option>
-                    <option value="전민동">전민동</option>
-                    <option value="도룡동">도룡동</option>
-                    <option value="죽동">죽동</option>
-                    <option value="어은/궁동/봉명">어은/궁동/봉명</option>
-                    <option value="노은/반석">노은/반석</option>
-                    <option value="만년/둔산">만년/둔산</option>
-                </select>
-                <select id="new-res-cat" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 appearance-none">
-                    <option value="">카테고리 선택</option>
-                    <option value="한식">한식</option>
-                    <option value="중식">중식</option>
-                    <option value="일식">일식</option>
-                    <option value="양식">양식</option>
-                    <option value="분식">분식</option>
-                </select>
+                <input type="text" id="new-res-name" placeholder="식당 이름" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 transition-all">
+                <select id="new-res-area" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">지역 선택</option><option value="신성동">신성동</option><option value="전민동">전민동</option><option value="도룡동">도룡동</option><option value="죽동">죽동</option><option value="어은/궁동/봉명">어은/궁동/봉명</option><option value="노은/반석">노은/반석</option><option value="만년/둔산">만년/둔산</option></select>
+                <select id="new-res-cat" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">카테고리 선택</option><option value="한식">한식</option><option value="중식">중식</option><option value="일식">일식</option><option value="양식">양식</option><option value="분식">분식</option></select>
                 <button onclick="submitNewStore()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black mt-2">지금 등록하기</button>
             </div>
         </div>
@@ -133,12 +114,10 @@
             const name = document.getElementById('new-res-name').value.trim();
             const address = document.getElementById('new-res-area').value;
             const category = document.getElementById('new-res-cat').value;
-
             if(!name || !address || !category) return alert("정보를 모두 입력해주세요!");
-
             const { error } = await supabaseClient.from('my_stores').insert([{ name, address, category }]);
             if(error) alert("등록 실패");
-            else { alert("제보해주셔서 감사합니다! 늘프가 리스트에 추가했습니다."); location.reload(); }
+            else { alert("제보해주셔서 감사합니다!"); location.reload(); }
         }
 
         function setStar(resName, rating) {
@@ -164,19 +143,11 @@
         async function filterAndRender() {
             const searchVal = document.getElementById('search-input').value.toLowerCase();
             const { data: reviews } = await supabaseClient.from('reviews').select('*');
-            
             const filtered = currentData.map(item => {
                 const myReviews = reviews?.filter(r => r.restaurant_name === item.name) || [];
-                const avgRating = myReviews.length > 0 
-                    ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
+                const avgRating = myReviews.length > 0 ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
                     : (item.isVip ? (4.6 + Math.random() * 0.3).toFixed(1) : (3.8 + Math.random() * 0.8).toFixed(1));
-                
-                return { ...item, 
-                         area: detectAreaRaw(item.address), 
-                         cat: simplifyCategory(item.category), 
-                         realScore: avgRating, 
-                         reviewCount: myReviews.length,
-                         reviews: myReviews };
+                return { ...item, area: detectAreaRaw(item.address), cat: simplifyCategory(item.category), realScore: avgRating, reviewCount: myReviews.length, reviews: myReviews };
             }).filter(i => {
                 const mA = fArea === '전체' || i.area === fArea;
                 const mC = fCat === '전체' || i.cat === fCat;
@@ -188,7 +159,6 @@
                 else if (fPrice === '3만원 이상') mP = i.price >= 30000;
                 return mA && mC && mS && mP;
             }).sort((a,b) => b.realScore - a.realScore);
-            
             renderList(filtered);
             renderFilters();
         }
@@ -203,7 +173,7 @@
                         <div class="flex-1 pr-4">
                             <div class="flex gap-2 items-center mb-1">
                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span>
-                                ${item.isVip ? '<span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold">VIP</span>' : ''}
+                                ${item.isVip ? '<span class="text-[8px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full font-bold">추천</span>' : ''}
                             </div>
                             <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
                             <p class="text-[11px] text-slate-400 truncate">${item.category}</p>
@@ -214,15 +184,12 @@
                         </div>
                     </div>
                     <div class="review-box">
-                        <div class="review-items">${item.reviews.length > 0 ? item.reviews.slice(-2).map(r => `<div class="review-item"><span>💬</span><span>${r.comment} (★${r.rating})</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">첫 리뷰와 별점을 남겨주세요!</div>'}</div>
+                        <div class="review-items">${item.reviews.length > 0 ? item.reviews.slice(-2).map(r => `<div class="review-item"><span>💬</span><span>${r.comment} (★${r.rating})</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">첫 리뷰를 남겨주세요!</div>'}</div>
                         <div class="review-input-group">
                             <div class="star-rating" id="star-group-${safeId}">
                                 <span onclick="setStar('${item.name}', 1)">★</span><span onclick="setStar('${item.name}', 2)">★</span><span onclick="setStar('${item.name}', 3)">★</span><span onclick="setStar('${item.name}', 4)">★</span><span onclick="setStar('${item.name}', 5)">★</span>
                             </div>
-                            <div class="flex gap-2">
-                                <input type="text" id="input-${safeId}" placeholder="한줄평 남기기..." class="flex-1 text-xs border-b border-slate-200 outline-none pb-1">
-                                <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button>
-                            </div>
+                            <div class="flex gap-2"><input type="text" id="input-${safeId}" placeholder="한줄평..." class="flex-1 text-xs border-b border-slate-200 outline-none pb-1"><button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button></div>
                         </div>
                     </div>
                 </div>
@@ -236,7 +203,7 @@
             if (addr.includes('죽동')) return '죽동';
             if (addr.includes('전민동') || addr.includes('문지동')) return '전민동';
             if (addr.includes('어은동') || addr.includes('궁동') || addr.includes('봉명동')) return '어은/궁동/봉명';
-            if (addr.includes('노은동') || addr.includes('반석동') || addr.includes('지족')) return '노은/반석';
+            if (addr.includes('노은동') || addr.includes('반석동')) return '노은/반석';
             if (addr.includes('만년동') || addr.includes('둔산동')) return '만년/둔산';
             return '기타';
         }
@@ -252,10 +219,7 @@
             document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
         }
 
-        function setFilter(type, val) { 
-            if(type === 'area') fArea = val; if(type === 'price') fPrice = val; if(type === 'cat') fCat = val; 
-            filterAndRender(); 
-        }
+        function setFilter(type, val) { if(type === 'area') fArea = val; if(type === 'price') fPrice = val; if(type === 'cat') fCat = val; filterAndRender(); }
 
         function getRandomPick() {
             const filtered = currentData.filter(i => (fArea === '전체' || detectAreaRaw(i.address) === fArea) && (fCat === '전체' || simplifyCategory(i.category) === fCat));
