@@ -3,10 +3,11 @@ const fetch = require('node-fetch');
 export default async function handler(req, res) {
   const NAVER_ID = 'Id2KWzmixu2C7UpDpkao';
   const NAVER_SECRET = 'd4sshbGFPj';
-  const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9'; // 발급받으신 REST API 키를 입력하세요.
+  // 키 앞에 KakaoAK 문구가 붙으므로, 아래 변수에는 키값만 넣으시면 됩니다.
+  const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9'; 
 
   const locations = [
-    '신성동', '도룡동', '죽동', '어은동', '전민동', '가정동',  
+    '신성동', '도룡동', '죽동', '어은동', '전민동', '가정동', 
     '문지동', '하기동', '궁동', '노은동', '만년동', '지족동', '반석동', '월평동', '원촌동'
   ];
 
@@ -24,39 +25,72 @@ export default async function handler(req, res) {
   ];
 
   try {
-    // 1. 단골집 개별 검색 (카카오)
+    // 1. 단골집 개별 검색 (카카오) - 맵을 돌 때 에러 처리를 강화
     const vipRequests = MY_VIP_STORES.map(name => 
       fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(name)}&size=1`, {
         headers: { 'Authorization': `KakaoAK ${KAKAO_KEY}` }
-      }).then(r => r.json()).catch(() => ({ documents: [] }))
+      })
+      .then(async r => {
+        if (!r.ok) return { documents: [] };
+        return r.json();
+      })
+      .catch(() => ({ documents: [] }))
     );
 
     // 2. 일반 동네 검색 (네이버)
     const naverRequests = locations.map(loc => 
       fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 유성구 ' + loc + ' 맛집')}&display=15`, {
         headers: { 'X-Naver-Client-Id': NAVER_ID, 'X-Naver-Client-Secret': NAVER_SECRET }
-      }).then(r => r.json()).catch(() => ({ items: [] }))
+      })
+      .then(async r => {
+        if (!r.ok) return { items: [] };
+        return r.json();
+      })
+      .catch(() => ({ items: [] }))
     );
 
+    // 모든 요청을 동시에 기다림
     const allResults = await Promise.all([...vipRequests, ...naverRequests]);
     
     let allItems = [];
     allResults.forEach(data => {
-      if (data.documents) { // 카카오 데이터
+      if (data && data.documents) { // 카카오 데이터 처리
         data.documents.forEach(item => {
-          allItems.push({ name: item.place_name, address: item.road_address_name || item.address_name, category: item.category_name });
+          allItems.push({
+            name: item.place_name,
+            address: item.road_address_name || item.address_name,
+            category: item.category_name,
+            isVip: true // 단골집 표시
+          });
         });
-      } else if (data.items) { // 네이버 데이터
+      } else if (data && data.items) { // 네이버 데이터 처리
         data.items.forEach(item => {
-          allItems.push({ name: item.title.replace(/<[^>]*>?/gm, ''), address: item.roadAddress || item.address, category: item.category });
+          const cleanName = item.title.replace(/<[^>]*>?/gm, '');
+          allItems.push({
+            name: cleanName,
+            address: item.roadAddress || item.address,
+            category: item.category,
+            isVip: false
+          });
         });
       }
     });
 
-    const uniqueItems = Array.from(new Map(allItems.map(item => [item.name.replace(/\s/g, ''), item])).values());
-    res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ items: uniqueItems });
+    // 중복 제거 (이름 기준)
+    const uniqueMap = new Map();
+    allItems.forEach(item => {
+      const key = item.name.replace(/\s/g, '');
+      if (!uniqueMap.has(key) || item.isVip) { // 단골집 데이터를 우선순위로 저장
+        uniqueMap.set(key, item);
+      }
+    });
+
+    const finalItems = Array.from(uniqueMap.values());
+    
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.status(200).json({ items: finalItems });
   } catch (error) {
-    res.status(500).json({ error: '데이터 병합 실패' });
+    console.error(error);
+    res.status(500).json({ error: '데이터를 불러오는 중 서버 오류가 발생했습니다.' });
   }
 }
