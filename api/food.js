@@ -1,4 +1,6 @@
+// 기존 require 방식 대신 이 방식으로 테스트
 const fetch = require('node-fetch');
+// 아래 한 줄을 이렇게 바꿔보세요
 const { createClient } = require('@supabase/supabase-js');
 
 export default async function handler(req, res) {
