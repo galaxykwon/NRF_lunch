@@ -12,6 +12,16 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .res-card { transition: all 0.2s ease; border-radius: 1.25rem; }
         .res-card:active { transform: scale(0.97); }
+        /* 추천 카드 클릭 유도 스타일 */
+        .pick-card { cursor: pointer; transition: transform 0.2s ease; }
+        .pick-card:active { transform: scale(0.95); }
+        .pick-animate { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="text-slate-800 pb-24">
@@ -33,9 +43,11 @@
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 쏜다! 🦕</h2>
+                <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 골라준다! 🎉</h2>
                 <p class="text-xs text-blue-100 font-medium mb-6" id="status-text">데이터 동기화 중...</p>
+                
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
+
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
                     <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
                     <span>운명의 메뉴 한 끼 뽑기</span>
@@ -61,7 +73,7 @@
             </div>
 
             <div class="flex justify-between items-center px-1">
-                <h3 class="font-black text-slate-900 text-sm italic">REST-LIST <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
+                <h3 class="font-black text-slate-900 text-sm italic tracking-tighter text-blue-600">LUNCH LIST <span class="text-slate-400 ml-1" id="count-badge">0</span></h3>
             </div>
 
             <div id="restaurant-list" class="space-y-4"></div>
@@ -79,7 +91,6 @@
         let currentData = [];
         let fArea = '전체', fPrice = '전체', fCat = '전체';
         
-        // 필터 구성 (사용자 요청 반영)
         const areas = ['전체', '신성동', '도룡동', '죽동', '어은동(궁동)', '전민동', '기타'];
         const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
@@ -92,7 +103,6 @@
 
                 if (data.items) {
                     currentData = data.items.map((item, idx) => {
-                        // 금액대 랜덤 할당 (실제 데이터가 없으므로 로직상 유지)
                         const randomPrice = Math.floor(Math.random() * 25000) + 8000;
                         return {
                             name: item.title.replace(/<[^>]*>?/gm, ''),
@@ -105,7 +115,7 @@
                         };
                     });
                     filterAndRender();
-                    status.innerText = `현재 ${currentData.length}개의 정제된 맛집이 준비되었습니다!`;
+                    status.innerText = `현재 ${currentData.length}개의 맛집이 준비되었습니다!`;
                 }
             } catch (e) { console.error(e); }
         }
@@ -125,7 +135,7 @@
             if (addr.includes('죽동')) return '죽동';
             if (addr.includes('전민동')) return '전민동';
             if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
-            return '기타'; // 나머지 가정, 장대, 관평동 등은 모두 '기타'로 분류
+            return '기타';
         }
 
         function filterAndRender() {
@@ -139,7 +149,6 @@
                 else if(fPrice === '3만원 이상') mP = i.price >= 30000;
                 return mA && mC && mP;
             });
-            
             filtered.sort((a, b) => b.score - a.score);
             renderList(filtered);
             return filtered;
@@ -149,7 +158,7 @@
             const container = document.getElementById('restaurant-list');
             document.getElementById('count-badge').innerText = list.length;
             container.innerHTML = list.map(item => `
-                <div class="res-card bg-white p-5 border border-slate-100 shadow-sm flex justify-between items-center" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
+                <div class="res-card bg-white p-5 border border-slate-100 shadow-sm flex justify-between items-center" onclick="openNaverMap('${item.name}')">
                     <div class="flex-1 pr-4">
                         <div class="flex gap-2 items-center mb-1">
                             <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span>
@@ -166,6 +175,11 @@
             `).join('');
         }
 
+        // 네이버 지도 열기 공통 함수
+        function openNaverMap(name) {
+            window.open(`https://map.naver.com/v5/search/${encodeURIComponent(name)}`, '_blank');
+        }
+
         function renderFilters() {
             document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
             document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
@@ -180,13 +194,22 @@
             filterAndRender();
         }
 
+        // 운명 뽑기: 결과 카드 클릭 시 네이버 지도로 연결되도록 수정
         function getRandomPick() {
             const pool = filterAndRender();
             const recArea = document.getElementById('recommend-area');
             if(pool.length > 0) {
                 const picks = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
                 recArea.classList.remove('hidden');
-                recArea.innerHTML = picks.map((p, i) => `<div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-animate shadow-lg"><div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div><div class="font-black text-[11px] truncate text-white">${p.name}</div></div>`).join('');
+                recArea.innerHTML = picks.map((p, i) => `
+                    <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-card pick-animate shadow-lg" 
+                         onclick="openNaverMap('${p.name}')"
+                         style="animation-delay: ${i * 0.1}s">
+                        <div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div>
+                        <div class="font-black text-[11px] truncate text-white">${p.name}</div>
+                        <div class="text-[8px] text-blue-200 mt-1">상세보기</div>
+                    </div>
+                `).join('');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
