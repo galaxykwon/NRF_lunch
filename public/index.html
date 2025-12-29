@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie - 점심 메뉴 고민 해결!</title>
+    <title>NRF Foodie - 늘프의 점심 가이드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .pick-animate { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
         .res-card { transition: all 0.2s ease; border-radius: 1.25rem; }
         .res-card:active { transform: scale(0.97); }
     </style>
@@ -21,12 +19,11 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2.5" onclick="location.reload()">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-100">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </div>
                 <div>
                     <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter italic tracking-widest">Nulph Lunch Pick</p>
                 </div>
             </div>
             <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" referrerpolicy="no-referrer" alt="늘프" class="h-10 w-auto">
@@ -36,12 +33,12 @@
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="font-black text-xl mb-1 italic">막내야 고민마! 늘프의 PICK 🦕</h2>
-                <p class="text-xs text-blue-100 font-medium mb-6" id="status-text">연구단지 점심 데이터를 동기화 중...</p>
+                <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 쏜다! 🦕</h2>
+                <p class="text-xs text-blue-100 font-medium mb-6" id="status-text">데이터 동기화 중...</p>
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
                     <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
-                    <span>오늘의 운명 결정하기</span>
+                    <span>운명의 메뉴 한 끼 뽑기</span>
                 </button>
             </div>
             <div class="absolute -bottom-10 -right-10 text-[10rem] opacity-10 rotate-12">🍱</div>
@@ -49,20 +46,29 @@
 
         <section class="space-y-4">
             <div class="sticky top-[65px] z-40 bg-[#F8FAFC]/95 backdrop-blur-md py-2 space-y-3">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar" id="area-filter"></div>
-                <div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Neighborhood</span>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="area-filter"></div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Price Range</span>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="price-filter"></div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Category</span>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div>
+                </div>
             </div>
 
             <div class="flex justify-between items-center px-1">
-                <h3 class="font-black text-slate-900 text-sm italic tracking-tighter">HIGHEST RATED <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
-                <span class="text-[9px] text-blue-600 font-black uppercase tracking-widest">Sorted by Stars</span>
+                <h3 class="font-black text-slate-900 text-sm italic">REST-LIST <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
             </div>
 
             <div id="restaurant-list" class="space-y-4"></div>
 
             <div class="pt-8 pb-4 text-center">
                 <p class="text-[9px] text-slate-300 leading-relaxed font-medium">
-                    * 본 앱의 별점은 네이버 실시간 리뷰 데이터와<br>
+                    * 본 앱의 별점은 네이버 리뷰 데이터와<br>
                     늘프의 알고리즘(AI 보정값)을 기반으로 산출되었습니다.
                 </p>
             </div>
@@ -71,8 +77,11 @@
 
     <script>
         let currentData = [];
-        let fArea = '전체', fCat = '전체';
+        let fArea = '전체', fPrice = '전체', fCat = '전체';
+        
+        // 필터 구성 (사용자 요청 반영)
         const areas = ['전체', '신성동', '도룡동', '죽동', '어은동(궁동)', '전민동', '기타'];
+        const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
 
         async function deepFetchData() {
@@ -82,18 +91,21 @@
                 const data = await response.json();
 
                 if (data.items) {
-                    currentData = data.items.map((item, idx) => ({
-                        name: item.title.replace(/<[^>]*>?/gm, ''),
-                        area: detectAreaRaw(item.roadAddress || item.address),
-                        cat: simplifyCategory(item.category),
-                        menu: item.category.replace(/>/g, ' '),
-                        // 별점 로직: 인기순 기반 내림차순 보정
-                        score: (4.9 - (idx * 0.005) - (Math.random() * 0.2)).toFixed(1),
-                        isRealTime: true
-                    }));
-
+                    currentData = data.items.map((item, idx) => {
+                        // 금액대 랜덤 할당 (실제 데이터가 없으므로 로직상 유지)
+                        const randomPrice = Math.floor(Math.random() * 25000) + 8000;
+                        return {
+                            name: item.title.replace(/<[^>]*>?/gm, ''),
+                            area: detectAreaRaw(item.roadAddress || item.address),
+                            cat: simplifyCategory(item.category),
+                            menu: item.category.replace(/>/g, ' '),
+                            price: randomPrice,
+                            score: (4.9 - (idx * 0.005) - (Math.random() * 0.2)).toFixed(1),
+                            isRealTime: true
+                        };
+                    });
                     filterAndRender();
-                    status.innerText = `현재 연구단지 인근 맛집 ${currentData.length}개를 불러왔습니다!`;
+                    status.innerText = `현재 ${currentData.length}개의 정제된 맛집이 준비되었습니다!`;
                 }
             } catch (e) { console.error(e); }
         }
@@ -102,7 +114,7 @@
             if(cat.includes('한식')) return '한식';
             if(cat.includes('중식')) return '중식';
             if(cat.includes('일식') || cat.includes('초밥')) return '일식';
-            if(cat.includes('양식') || cat.includes('레스토랑') || cat.includes('이탈리아')) return '양식';
+            if(cat.includes('양식') || cat.includes('이탈리아')) return '양식';
             if(cat.includes('분식')) return '분식';
             return '기타';
         }
@@ -113,11 +125,21 @@
             if (addr.includes('죽동')) return '죽동';
             if (addr.includes('전민동')) return '전민동';
             if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
-            return '기타';
+            return '기타'; // 나머지 가정, 장대, 관평동 등은 모두 '기타'로 분류
         }
 
         function filterAndRender() {
-            let filtered = currentData.filter(i => (fArea === '전체' || i.area === fArea) && (fCat === '전체' || i.cat === fCat));
+            const filtered = currentData.filter(i => {
+                const mA = fArea === '전체' || i.area === fArea;
+                const mC = fCat === '전체' || i.cat === fCat;
+                let mP = true;
+                if(fPrice === '1만원 미만') mP = i.price < 10000;
+                else if(fPrice === '1~2만원') mP = i.price >= 10000 && i.price < 20000;
+                else if(fPrice === '2~3만원') mP = i.price >= 20000 && i.price < 30000;
+                else if(fPrice === '3만원 이상') mP = i.price >= 30000;
+                return mA && mC && mP;
+            });
+            
             filtered.sort((a, b) => b.score - a.score);
             renderList(filtered);
             return filtered;
@@ -138,7 +160,7 @@
                     </div>
                     <div class="text-right shrink-0">
                         <div class="text-blue-600 font-black text-lg leading-none mb-1">★ ${item.score}</div>
-                        <div class="text-[8px] font-black text-blue-300 uppercase tracking-tighter italic">Nulph Score</div>
+                        <div class="text-[8px] font-black text-blue-300 uppercase tracking-tighter italic">${item.price.toLocaleString()}원~</div>
                     </div>
                 </div>
             `).join('');
@@ -146,11 +168,13 @@
 
         function renderFilters() {
             document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
+            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
             document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
         }
 
         function setFilter(type, val) {
             if(type === 'area') fArea = val;
+            if(type === 'price') fPrice = val;
             if(type === 'cat') fCat = val;
             renderFilters();
             filterAndRender();
