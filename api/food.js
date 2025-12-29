@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const NAVER_SECRET = 'd4sshbGFPj';
   const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9';
   
-  // Supabase 설정 (사용자님의 정보를 그대로 사용)
+  // Supabase 설정
   const SB_URL = 'https://pbfgygmykizekzkzjrmo.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZmd5Z215a2l6ZWt6a3pqcm1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODkwMzcsImV4cCI6MjA4MjU2NTAzN30.EbZbSDhDfO8IYZq1vguctih8T_7ChDGpfsubP_mhCuY';
   const supabase = createClient(SB_URL, SB_KEY);
@@ -80,10 +80,10 @@ export default async function handler(req, res) {
   const locations = ['신성동', '도룡동', '죽동', '전민동', '어은동', '궁동', '만년동', '노은동'];
 
   try {
-    // 1. 직원 등록 맛집 가져오기 (Supabase)
+    // 1. [핵심] 직원들이 직접 등록한 맛집 가져오기
     const { data: userStores } = await supabase.from('my_stores').select('*');
 
-    // 2. 네이버 & 카카오 검색
+    // 2. 네이버 & 카카오 실시간 검색
     const naverRequests = locations.map(loc => 
       fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&display=15`, {
         headers: { 'X-Naver-Client-Id': NAVER_ID, 'X-Naver-Client-Secret': NAVER_SECRET }
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
     let allItems = [];
     MUST_HAVE.forEach(item => allItems.push(item));
 
-    // 직원 등록 데이터 합치기 (VIP 표시 추가)
+    // 직원 등록 맛집 추가
     if (userStores) {
       userStores.forEach(s => allItems.push({ ...s, isVip: true }));
     }
@@ -109,21 +109,11 @@ export default async function handler(req, res) {
     allResults.forEach(data => {
       if (data && data.documents) {
         data.documents.forEach(item => {
-          allItems.push({ 
-            name: item.place_name, 
-            address: item.road_address_name || item.address_name, 
-            category: item.category_name, 
-            isVip: false 
-          });
+          allItems.push({ name: item.place_name, address: item.road_address_name || item.address_name, category: item.category_name, isVip: false });
         });
       } else if (data && data.items) {
         data.items.forEach(item => {
-          allItems.push({ 
-            name: item.title.replace(/<[^>]*>?/gm, ''), 
-            address: item.roadAddress || item.address, 
-            category: item.category, 
-            isVip: false 
-          });
+          allItems.push({ name: item.title.replace(/<[^>]*>?/gm, ''), address: item.roadAddress || item.address, category: item.category, isVip: false });
         });
       }
     });
@@ -135,11 +125,11 @@ export default async function handler(req, res) {
         if (!item.price) {
           const cat = item.category || "";
           const name = item.name;
-          if (['한정식', '오마카세', '코스', '한우', '소고기', '참치', '스시', '스테이크', '장어', '복어'].some(w => name.includes(w) || cat.includes(w))) {
+          if (['한정식', '오마카세', '코스', '한우', '소고기', '참치', '스시', '스테이크'].some(w => name.includes(w) || cat.includes(w))) {
             item.price = 35000; 
           } else if (['파스타', '피자', '태국', '아시아', '레스토랑'].some(w => cat.includes(w))) {
             item.price = 16000;
-          } else if (['국밥', '순대', '찌개', '백반', '한식', '분식', '떡볶이', '칼국수', '국수'].some(w => name.includes(w) || cat.includes(w))) {
+          } else if (['국밥', '순대', '찌개', '백반', '한식', '분식', '떡볶이', '칼국수'].some(w => name.includes(w) || cat.includes(w))) {
             item.price = 9000;
           } else {
             item.price = 12500;
