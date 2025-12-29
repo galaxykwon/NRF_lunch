@@ -18,8 +18,11 @@
         .review-input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         .star-rating { display: flex; gap: 6px; color: #cbd5e1; cursor: pointer; font-size: 18px; }
         .star-rating .active { color: #facc15; }
-        .star-rating span:hover { transform: scale(1.2); transition: 0.1s; }
         footer p { line-height: 1.6; }
+        
+        /* 제보 모달 스타일 */
+        #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 2rem; padding: 2rem; }
     </style>
 </head>
 <body class="text-slate-800 pb-24">
@@ -32,7 +35,7 @@
                 </div>
                 <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
             </div>
-            <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" referrerpolicy="no-referrer" alt="늘프" class="h-10 w-auto">
+            <button onclick="document.getElementById('add-modal').style.display='flex'" class="text-[10px] bg-slate-900 text-white px-3 py-2 rounded-full font-bold">맛집 제보하기 +</button>
         </div>
     </header>
 
@@ -63,15 +66,39 @@
         <footer class="py-12 px-6 text-center space-y-4">
             <div class="bg-slate-100/50 p-5 rounded-3xl">
                 <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-tighter">⭐ 별점 부여 원리</p>
-                <p class="text-[10px] text-slate-400 font-medium">
-                    본 앱의 별점은 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다. <br>
-                    리뷰가 없는 식당은 늘프가 분석한 기본 점수가 부여되며, <br>
-                    임직원분들의 소중한 한줄평과 별점이 쌓일수록 더욱 정확한 맛집 지도가 완성됩니다.
-                </p>
+                <p class="text-[10px] text-slate-400 font-medium">본 앱의 별점은 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다.</p>
             </div>
             <p class="text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase">Designed by Galaxy</p>
         </footer>
     </main>
+
+    <div id="add-modal" onclick="if(event.target === this) this.style.display='none'">
+        <div class="modal-content shadow-2xl animate-bounce-in">
+            <h3 class="font-black text-xl mb-4">맛집 제보하기 🍱</h3>
+            <div class="space-y-3">
+                <input type="text" id="new-res-name" placeholder="식당 이름 (예: 팔복집)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 transition-all">
+                <select id="new-res-area" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 appearance-none">
+                    <option value="">지역 선택</option>
+                    <option value="신성동">신성동</option>
+                    <option value="전민동">전민동</option>
+                    <option value="도룡동">도룡동</option>
+                    <option value="죽동">죽동</option>
+                    <option value="어은/궁동/봉명">어은/궁동/봉명</option>
+                    <option value="노은/반석">노은/반석</option>
+                    <option value="만년/둔산">만년/둔산</option>
+                </select>
+                <select id="new-res-cat" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 appearance-none">
+                    <option value="">카테고리 선택</option>
+                    <option value="한식">한식</option>
+                    <option value="중식">중식</option>
+                    <option value="일식">일식</option>
+                    <option value="양식">양식</option>
+                    <option value="분식">분식</option>
+                </select>
+                <button onclick="submitNewStore()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black mt-2">지금 등록하기</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const SB_URL = 'https://pbfgygmykizekzkzjrmo.supabase.co';
@@ -102,6 +129,18 @@
             } catch (e) { document.getElementById('status-text').innerText = "데이터 로딩 오류"; }
         }
 
+        async function submitNewStore() {
+            const name = document.getElementById('new-res-name').value.trim();
+            const address = document.getElementById('new-res-area').value;
+            const category = document.getElementById('new-res-cat').value;
+
+            if(!name || !address || !category) return alert("정보를 모두 입력해주세요!");
+
+            const { error } = await supabaseClient.from('my_stores').insert([{ name, address, category }]);
+            if(error) alert("등록 실패");
+            else { alert("제보해주셔서 감사합니다! 늘프가 리스트에 추가했습니다."); location.reload(); }
+        }
+
         function setStar(resName, rating) {
             const safeId = resName.replace(/\s/g, '');
             const stars = document.querySelectorAll(`#star-group-${safeId} span`);
@@ -116,12 +155,10 @@
             const safeId = resName.replace(/\s/g, '');
             const comment = document.getElementById(`input-${safeId}`).value.trim();
             const rating = window[`rating_${safeId}`] || 5;
-
             if(!comment) return alert("한줄평을 입력해주세요!");
-
             const { error } = await supabaseClient.from('reviews').insert([{ restaurant_name: resName, comment: comment, rating: rating }]);
             if(error) alert("등록 실패");
-            else { alert("의견이 반영되었습니다!"); location.reload(); }
+            else { alert("의견 반영 완료!"); location.reload(); }
         }
 
         async function filterAndRender() {
