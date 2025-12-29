@@ -6,15 +6,21 @@
     <title>NRF Foodie - 늘프의 점심 가이드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .res-card { transition: all 0.2s ease; border-radius: 1.25rem; }
+        .res-card { transition: all 0.2s ease; border-radius: 1.25rem; overflow: hidden; }
         .res-card:active { transform: scale(0.97); }
         .pick-card { cursor: pointer; transition: transform 0.2s ease; position: relative; }
         .pick-animate { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.05); } 100% { transform: scale(1); } }
+        /* 한줄평 스타일 */
+        .review-box { background: #f8fafc; border-radius: 12px; padding: 10px; margin-top: 12px; border: 1px solid #f1f5f9; }
+        .review-item { font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; gap: 4px; line-height: 1.4; }
+        .review-input-group { display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; }
+        .review-input-group input { flex: 1; font-size: 11px; border: none; background: transparent; outline: none; }
     </style>
 </head>
 <body class="text-slate-800 pb-24">
@@ -22,7 +28,7 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2.5" onclick="location.reload()">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-100">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </div>
                 <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
@@ -36,14 +42,12 @@
             <div class="relative z-10">
                 <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 늘프가 골라드릴게요!</h2>
                 <p class="text-xs text-blue-100 font-bold mb-6 opacity-90" id="day-theme-sub">로딩 중...</p>
-                
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
-
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
                     <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
                     <span>운명의 메뉴 한 끼 뽑기</span>
                 </button>
-                <p class="text-[10px] text-blue-200 mt-4 text-center font-medium" id="status-text">늘프가 맛집 정보를 동기화 중...</p>
+                <p class="text-[10px] text-blue-200 mt-4 text-center font-medium" id="status-text">늘프가 데이터를 동기화 중...</p>
             </div>
             <div class="absolute -bottom-10 -right-10 text-[10rem] opacity-10 rotate-12">🍱</div>
         </section>
@@ -55,27 +59,26 @@
                 <div class="flex flex-col gap-1.5"><div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div></div>
             </div>
             <div id="restaurant-list" class="space-y-4"></div>
-            
-            <div class="pt-8 pb-4 text-center">
-                <p class="text-[9px] text-slate-300 leading-relaxed font-medium">
-                    * 본 앱의 별점과 가격은 실시간 업종 데이터와<br>
-                    늘프 알고리즘(AI 추정치)을 기반으로 산출되었습니다.
-                </p>
-            </div>
         </section>
     </main>
 
     <script>
+        // --- 1. Supabase 설정 적용 ---
+        const SB_URL = 'https://pbfgygmykizekzkzjrmo.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZmd5Z215a2l6ZWt6a3pqcm1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODkwMzcsImV4cCI6MjA4MjU2NTAzN30.EbZbSDhDfO8IYZq1vguctih8T_7ChDGpfsubP_mhCuY';
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
         let currentData = [];
         let fArea = '전체', fPrice = '전체', fCat = '전체';
         const areas = ['전체', '신성동', '도룡동', '죽동', '어은동(궁동)', '전민동', '기타'];
         const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
 
+        // 요일 테마 설정
         function setDayTheme() {
             const day = new Date().getDay();
             const themes = [
-                "평화로운 일요일, 내일을 위해 잘 먹어둬요! 🏠",
+                "평화로운 일요일, 내일을 위해 푹 쉬어요! 🏠",
                 "월요병 극복! 기력 보충 고기데이는 어때요? 😊",
                 "화끈하게 먹고 화요일도 힘내봐요! 🔥",
                 "수요일은 수수하게 백반 어때요? 🍚",
@@ -86,6 +89,7 @@
             document.getElementById('day-theme-sub').innerText = themes[day];
         }
 
+        // 데이터 로딩
         async function deepFetchData() {
             const status = document.getElementById('status-text');
             try {
@@ -95,48 +99,37 @@
                     currentData = data.items.map((item, idx) => {
                         const sCat = simplifyCategory(item.category);
                         const checkString = (item.name + item.category).replace(/\s/g, '');
-                        let calcPrice = 10000;
-                        const luxuryWords = ['한우', '소고기', '스테이크', '참치', '스시', '오마카세', '장어', '복어', '한정식'];
-                        const budgetWords = ['국밥', '해장국', '순대국', '짜장', '짬뽕', '떡볶이', '김밥', '라면', '국수', '칼국수'];
+                        let calcPrice = 12500;
+                        if (['한우','소고기','참치','회','스시'].some(w => checkString.includes(w))) calcPrice = 45000;
+                        else if (['국밥','해장국','짜장','짬뽕','분식','떡볶이'].some(w => checkString.includes(w))) calcPrice = 9000;
 
-                        if (luxuryWords.some(w => checkString.includes(w))) calcPrice = 45000;
-                        else if (budgetWords.some(w => checkString.includes(w)) || sCat === '분식') calcPrice = 9000;
-                        else calcPrice = 12500;
-
-                        return {
-                            name: item.name,
-                            area: detectAreaRaw(item.address),
-                            cat: sCat,
-                            menu: item.category.replace(/>/g, ' '),
-                            price: calcPrice,
-                            score: (4.9 - (idx * 0.003) - (Math.random() * 0.2)).toFixed(1),
-                        };
+                        return { name: item.name, area: detectAreaRaw(item.address), cat: sCat, menu: item.category.replace(/>/g, ' '), price: calcPrice, score: (4.9 - (idx * 0.003) - (Math.random() * 0.2)).toFixed(1) };
                     });
                     filterAndRender();
                     status.innerText = `늘프가 ${currentData.length}개 식당을 준비해보았어요. 😊`;
                 }
-            } catch (e) { status.innerText = "데이터 로딩 오류"; }
+            } catch (e) { status.innerText = "로딩 오류가 발생했습니다."; }
         }
 
-        function detectAreaRaw(addr) {
-            if (addr.includes('신성동')) return '신성동';
-            if (addr.includes('도룡동')) return '도룡동';
-            if (addr.includes('죽동')) return '죽동';
-            if (addr.includes('전민동')) return '전민동';
-            if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
-            return '기타';
+        // 한줄평 저장
+        async function saveReview(resName) {
+            const safeId = resName.replace(/\s/g, '');
+            const input = document.getElementById(`input-${safeId}`);
+            const comment = input.value.trim();
+            if(!comment) return alert("내용을 입력해주세요!");
+            if(comment.length > 20) return alert("20자 이내로 작성해주세요!");
+
+            const { error } = await supabaseClient.from('reviews').insert([{ restaurant_name: resName, comment: comment, rating: 5 }]);
+            if(error) alert("저장 중 오류가 발생했습니다.");
+            else { 
+                alert("임직원 리뷰가 등록되었습니다!"); 
+                input.value = ""; 
+                filterAndRender(); 
+            }
         }
 
-        function simplifyCategory(cat) {
-            if(cat.includes('한식')) return '한식';
-            if(cat.includes('중식')) return '중식';
-            if(cat.includes('일식')) return '일식';
-            if(cat.includes('양식')) return '양식';
-            if(cat.includes('분식')) return '분식';
-            return '기타';
-        }
-
-        function filterAndRender() {
+        // 필터 및 렌더링 통합
+        async function filterAndRender() {
             const filtered = currentData.filter(i => {
                 const mA = fArea === '전체' || i.area === fArea;
                 const mC = fCat === '전체' || i.cat === fCat;
@@ -147,39 +140,48 @@
                 else if(fPrice === '3만원 이상') mP = i.price >= 30000;
                 return mA && mC && mP;
             }).sort((a,b) => b.score - a.score);
-            renderList(filtered);
+            
+            const { data: reviews } = await supabaseClient.from('reviews').select('*').order('created_at', { ascending: false });
+            renderList(filtered, reviews || []);
             return filtered;
         }
 
-        function renderList(list) {
+        function renderList(list, reviews) {
             const container = document.getElementById('restaurant-list');
-            container.innerHTML = list.map(item => `
-                <div class="res-card bg-white p-5 border border-slate-100 shadow-sm flex justify-between items-center" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
-                    <div class="flex-1 pr-4">
-                        <div class="flex gap-2 items-center mb-1"><span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span><span class="text-[9px] font-black text-blue-600">#${item.cat}</span></div>
-                        <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
-                        <p class="text-[11px] text-slate-400 font-medium truncate">${item.menu}</p>
+            container.innerHTML = list.map(item => {
+                const myReviews = reviews.filter(r => r.restaurant_name === item.name);
+                const safeId = item.name.replace(/\s/g, '');
+                return `
+                <div class="res-card bg-white p-5 border border-slate-100 shadow-sm mb-4">
+                    <div class="flex justify-between items-center mb-3" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
+                        <div class="flex-1 pr-4">
+                            <div class="flex gap-2 items-center mb-1"><span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span><span class="text-[9px] font-black text-blue-600">#${item.cat}</span></div>
+                            <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
+                            <p class="text-[11px] text-slate-400 font-medium truncate">${item.menu}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-blue-600 font-black text-lg">★ ${item.score}</div>
+                            <div class="text-[8px] font-black text-blue-300 uppercase">${item.price.toLocaleString()}원~</div>
+                        </div>
                     </div>
-                    <div class="text-right"><div class="text-blue-600 font-black text-lg">★ ${item.score}</div><div class="text-[8px] font-black text-blue-300 uppercase">${item.price.toLocaleString()}원~</div></div>
+                    <div class="review-box">
+                        <div class="review-items">
+                            ${myReviews.length > 0 ? myReviews.slice(0, 3).map(r => `<div class="review-item"><span>💬</span><span>${r.comment}</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">임직원 첫 리뷰를 남겨주세요!</div>'}
+                        </div>
+                        <div class="review-input-group">
+                            <input type="text" id="input-${safeId}" placeholder="20자 이내 한줄평..." maxlength="20">
+                            <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button>
+                        </div>
+                    </div>
                 </div>
-            `).join('');
+            `;}).join('');
         }
 
-        function renderFilters() {
-            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
-            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
-            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
-        }
-
-        function setFilter(type, val) { 
-            if(type === 'area') fArea = val; if(type === 'price') fPrice = val; if(type === 'cat') fCat = val; 
-            renderFilters(); filterAndRender(); 
-        }
-
+        // 운명의 랜덤 뽑기
         function getRandomPick() {
-            const pool = filterAndRender();
-            if(pool.length > 0) {
-                const picks = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
+            const filtered = currentData.filter(i => (fArea === '전체' || i.area === fArea) && (fCat === '전체' || i.cat === fCat));
+            if(filtered.length > 0) {
+                const picks = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 3);
                 const recArea = document.getElementById('recommend-area');
                 recArea.classList.remove('hidden');
                 recArea.innerHTML = picks.map((p, i) => `
@@ -193,8 +195,28 @@
             }
         }
 
+        // 보조 함수들
+        function detectAreaRaw(addr) { if (addr.includes('신성동')) return '신성동'; if (addr.includes('도룡동')) return '도룡동'; if (addr.includes('죽동')) return '죽동'; if (addr.includes('전민동')) return '전민동'; if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)'; return '기타'; }
+        function simplifyCategory(cat) { if(cat.includes('한식')) return '한식'; if(cat.includes('중식')) return '중식'; if(cat.includes('일식')) return '일식'; if(cat.includes('양식')) return '양식'; if(cat.includes('분식')) return '분식'; return '기타'; }
+        
+        function renderFilters() {
+            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
+            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
+            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
+        }
+
+        function setFilter(type, val) { 
+            if(type === 'area') fArea = val; 
+            if(type === 'price') fPrice = val; 
+            if(type === 'cat') fCat = val; 
+            renderFilters(); 
+            filterAndRender(); 
+        }
+
         document.addEventListener('DOMContentLoaded', () => { 
-            setDayTheme(); renderFilters(); deepFetchData(); 
+            setDayTheme(); 
+            renderFilters(); 
+            deepFetchData(); 
         });
     </script>
 </body>
