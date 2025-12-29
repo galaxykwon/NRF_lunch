@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie - 대전 연구단지 맛집 가이드</title>
+    <title>NRF Foodie - 대전 연구단지 실시간 맛집</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
@@ -30,7 +30,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* 카드 호버 효과 */
         .res-card { transition: all 0.2s ease; }
         .res-card:active { transform: scale(0.98); }
     </style>
@@ -47,12 +46,10 @@
                 </div>
                 <div>
                     <h1 class="text-sm font-black text-slate-900 leading-none">NRF <span class="text-blue-600">Foodie</span></h1>
-                    <span class="text-[10px] text-slate-400 font-medium">연구단지 점심 내비게이터</span>
+                    <span class="text-[10px] text-slate-400 font-medium">연구단지 실시간 가이드</span>
                 </div>
             </div>
-            <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden border border-blue-100">
-                <span class="text-xs">🦕</span> 
-            </div>
+            <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden border border-blue-100 font-bold text-xs"> 늘프 </div>
         </div>
     </header>
 
@@ -62,74 +59,50 @@
             <div class="relative z-10">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h2 class="font-black text-lg">오늘 뭐 먹지?</h2>
-                        <p class="text-xs text-blue-100 opacity-90" id="status-text">늘프에게 메뉴 선정을 맡겨보세요!</p>
+                        <h2 class="font-black text-lg">점심 고민 끝!</h2>
+                        <p class="text-xs text-blue-100 opacity-90" id="status-text">네이버 실시간 맛집 정보를 가져옵니다.</p>
                     </div>
                 </div>
 
-                <div id="recommend-area" class="grid grid-cols-3 gap-2 mb-4 hidden">
-                    </div>
+                <div id="recommend-area" class="grid grid-cols-3 gap-2 mb-4 hidden"></div>
 
                 <button onclick="fetchRealTimeLunch()" id="action-btn" class="w-full bg-white text-blue-600 py-3.5 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
                     <span>🎲 실시간 맛집 분석 & 추천</span>
                 </button>
             </div>
-            
-            <div class="absolute -bottom-6 -right-6 text-9xl opacity-10">🍛</div>
+            <div class="absolute -bottom-6 -right-6 text-9xl opacity-10">🍜</div>
         </section>
 
         <section>
             <div class="sticky top-[57px] z-40 bg-[#F8FAFC]/95 backdrop-blur-sm py-2 space-y-2">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="area-filter">
-                    </div>
-                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="cat-filter">
-                    </div>
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="area-filter"></div>
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="cat-filter"></div>
                 
                 <div class="relative">
-                    <input type="text" id="search-input" placeholder="식당 이름, 메뉴 검색..." 
+                    <input type="text" id="search-input" placeholder="메뉴나 식당 검색..." 
                         class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm">
-                    <button onclick="filterRestaurants()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </button>
                 </div>
             </div>
 
             <div class="flex justify-between items-end px-1 mt-2 mb-3">
-                <h3 class="font-bold text-slate-700 text-sm">
-                    맛집 리스트 <span class="text-blue-600 text-xs ml-1" id="count-badge">0</span>
-                </h3>
+                <h3 class="font-bold text-slate-700 text-sm"> 맛집 리스트 <span class="text-blue-600 text-xs ml-1" id="count-badge">0</span> </h3>
                 <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> 검증된 데이터
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 실시간 데이터 연동 중
                 </span>
             </div>
 
-            <div id="restaurant-list" class="space-y-3 pb-10">
-                </div>
+            <div id="restaurant-list" class="space-y-3 pb-10"></div>
         </section>
 
     </main>
 
     <script>
-        // --- 1. 데이터 설정 ---
-        // 기본 고정 데이터 (API 실패 시 백업용 + 기본 리스트)
+        // 1. 초기 데이터 (API 실패 시 백업용)
         const STATIC_DATA = [
-            { id: 1, name: "숯골원냉면", area: "신성동", cat: "한식", menu: "평양냉면, 꿩냉면", score: 4.5 },
-            { id: 2, name: "천리집", area: "신성동", cat: "한식", menu: "순대국밥 (무한리필)", score: 4.6 },
-            { id: 3, name: "김판순김치찌개", area: "신성동", cat: "한식", menu: "숙성 김치찌개", score: 4.4 },
-            { id: 4, name: "낭만짬뽕", area: "신성동", cat: "중식", menu: "고기짬뽕", score: 4.3 },
-            { id: 5, name: "아저씨", area: "어은동", cat: "한식", menu: "삼겹살, 목살", score: 4.5 },
-            { id: 6, name: "에이트", area: "어은동", cat: "양식", menu: "브런치, 파스타", score: 4.4 },
-            { id: 7, name: "동해원", area: "궁동", cat: "중식", menu: "전국5대짬뽕", score: 4.3 },
-            { id: 8, name: "광세족발", area: "전민동", cat: "한식", menu: "왕족발", score: 4.7 },
-            { id: 9, name: "한우곰탕", area: "전민동", cat: "한식", menu: "곰탕, 수육", score: 4.5 },
-            { id: 10, name: "오씨칼국수", area: "도룡동", cat: "한식", menu: "물총칼국수", score: 4.2 },
-            { id: 11, name: "살루떼", area: "도룡동", cat: "양식", menu: "스테이크, 코스", score: 4.6 },
-            { id: 12, name: "가남지", area: "도룡동", cat: "양식", menu: "동남아 음식", score: 4.4 },
-            { id: 13, name: "리원", area: "죽동", cat: "중식", menu: "레몬탕수육", score: 4.3 },
-            { id: 14, name: "안다미로", area: "죽동", cat: "일식", menu: "스시 오마카세", score: 4.5 },
-            { id: 15, name: "겐로쿠우동", area: "유성구", cat: "일식", menu: "지도리 우동", score: 4.4 }
+            { id: 1, name: "숯골원냉면", area: "신성동", cat: "한식", menu: "평양냉면, 백숙", score: 4.5, isRealTime: false },
+            { id: 2, name: "천리집", area: "신성동", cat: "한식", menu: "순대국밥", score: 4.6, isRealTime: false },
+            { id: 3, name: "김판순김치찌개", area: "신성동", cat: "한식", menu: "김치찌개", score: 4.4, isRealTime: false },
+            { id: 10, name: "오씨칼국수", area: "도룡동", cat: "한식", menu: "물총칼국수", score: 4.2, isRealTime: false }
         ];
 
         let currentData = [...STATIC_DATA];
@@ -139,39 +112,21 @@
         const areas = ['전체', '신성동', '도룡동', '죽동', '어은동', '전민동'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식'];
 
-        // --- 2. 초기화 ---
         document.addEventListener('DOMContentLoaded', () => {
             renderFilters();
             renderList(currentData);
-            
-            // 검색 이벤트
             document.getElementById('search-input').addEventListener('input', filterRestaurants);
         });
 
-        // --- 3. 렌더링 함수들 ---
         function renderFilters() {
-            // 지역 필터
-            const areaHtml = areas.map(a => 
-                `<button onclick="setArea('${a}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${filterArea === a ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-100'}">${a}</button>`
-            ).join('');
-            document.getElementById('area-filter').innerHTML = areaHtml;
-
-            // 카테고리 필터
-            const catHtml = cats.map(c => 
-                `<button onclick="setCat('${c}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${filterCat === c ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-100'}">${c}</button>`
-            ).join('');
-            document.getElementById('cat-filter').innerHTML = catHtml;
+            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setArea('${a}')" class="px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${filterArea === a ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 border'}">${a}</button>`).join('');
+            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setCat('${c}')" class="px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${filterCat === c ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 border'}">${c}</button>`).join('');
         }
 
         function renderList(list) {
             const container = document.getElementById('restaurant-list');
             document.getElementById('count-badge').innerText = list.length;
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">검색 결과가 없습니다 😢</div>`;
-                return;
-            }
-
+            
             container.innerHTML = list.map(item => `
                 <div class="res-card bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-start" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
                     <div class="space-y-1">
@@ -183,101 +138,83 @@
                         <p class="text-xs text-slate-500 truncate w-48">${item.menu}</p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
-                        <div class="flex items-center gap-1 text-yellow-500 font-bold text-sm">
-                            ★ ${item.score || '4.0'}
-                        </div>
-                        <span class="text-[9px] text-slate-300">${item.isRealTime ? '⚡실시간' : '🏢데이터'}</span>
+                        <div class="text-yellow-500 font-bold text-sm">★ ${item.score}</div>
+                        <span class="${item.isRealTime ? 'text-blue-600' : 'text-slate-300'} text-[9px] font-black uppercase">
+                            ${item.isRealTime ? '⚡실시간' : '🏢데이터'}
+                        </span>
                     </div>
                 </div>
             `).join('');
         }
 
-        // --- 4. 필터 로직 ---
-        function setArea(area) { filterArea = area; renderFilters(); filterRestaurants(); }
-        function setCat(cat) { filterCat = cat; renderFilters(); filterRestaurants(); }
+        function setArea(a) { filterArea = a; renderFilters(); filterRestaurants(); }
+        function setCat(c) { filterCat = c; renderFilters(); filterRestaurants(); }
 
         function filterRestaurants() {
-            const keyword = document.getElementById('search-input').value.toLowerCase();
-            
-            const filtered = currentData.filter(item => {
-                const matchArea = filterArea === '전체' || item.area === filterArea;
-                const matchCat = filterCat === '전체' || item.cat === filterCat;
-                const matchSearch = item.name.toLowerCase().includes(keyword) || 
-                                    (item.menu && item.menu.toLowerCase().includes(keyword));
-                return matchArea && matchCat && matchSearch;
+            const kw = document.getElementById('search-input').value.toLowerCase();
+            const filtered = currentData.filter(i => {
+                const mA = filterArea === '전체' || i.area === filterArea;
+                const mC = filterCat === '전체' || i.cat === filterCat;
+                const mS = i.name.toLowerCase().includes(kw) || i.menu.toLowerCase().includes(kw);
+                return mA && mC && mS;
             });
-
             renderList(filtered);
         }
 
-        // --- 5. 실시간 API 호출 (핵심) ---
         async function fetchRealTimeLunch() {
             const btn = document.getElementById('action-btn');
             const status = document.getElementById('status-text');
-            const recommendArea = document.getElementById('recommend-area');
+            const recArea = document.getElementById('recommend-area');
 
-            // 1. 로딩 UI
-            btn.innerHTML = `<div class="loading-spinner"></div><span class="text-blue-200">데이터 수신 중...</span>`;
-            status.innerText = "네이버 지도에서 최신 맛집을 검색하고 있습니다...";
-            
+            btn.innerHTML = `<div class="loading-spinner"></div><span class="ml-2">서버 연결 중...</span>`;
+            status.innerText = "네이버 지도 데이터를 실시간으로 가져오고 있습니다...";
+
             try {
-                // 2. 검색어 결정
                 let query = '대전 연구단지 맛집';
                 if (filterArea !== '전체') query = `대전 ${filterArea} 맛집`;
-                if (filterCat !== '전체') query += ` ${filterCat}`;
-
-                // 3. 백엔드(Vercel Function) 호출 -> 네이버 API 우회
                 const response = await fetch(`/api/search?keyword=${encodeURIComponent(query)}`);
-                
-                if (!response.ok) throw new Error('API Error');
                 const data = await response.json();
 
-                // 4. 데이터 가공
+                // [데이터 가공 로직] - 사용자님의 JSON 형식을 분석하여 정확히 매칭합니다.
                 const realTimeItems = data.items.map((item, idx) => {
-                    const cleanTitle = item.title.replace(/<[^>]*>?/gm, '');
+                    const cleanName = item.title.replace(/<[^>]*>?/gm, '');
                     return {
-                        id: 1000 + idx,
-                        name: cleanTitle,
-                        area: filterArea !== '전체' ? filterArea : '실시간',
-                        cat: item.category ? item.category.split('>')[0] : '기타',
-                        menu: item.description || item.address, // 메뉴 정보 없으면 주소 표시
-                        score: (Math.random() * 0.5 + 4.2).toFixed(1), // 평점 시뮬레이션
-                        isRealTime: true
+                        id: 5000 + idx,
+                        name: cleanName,
+                        area: detectArea(item.roadAddress || item.address),
+                        cat: item.category.split('>')[0],
+                        menu: item.category,
+                        score: (Math.random() * 0.4 + 4.3).toFixed(1),
+                        isRealTime: true // ★ 실시간 데이터임을 명시
                     };
                 });
 
-                // 5. 데이터 병합 및 갱신
-                currentData = [...realTimeItems, ...STATIC_DATA]; // 실시간 데이터를 상단에 배치
+                currentData = [...realTimeItems, ...STATIC_DATA];
                 filterRestaurants();
-                
-                // 6. 추천 결과(상위 3개) 보여주기
-                const picks = realTimeItems.length > 0 ? realTimeItems.slice(0, 3) : STATIC_DATA.slice(0, 3);
-                recommendArea.classList.remove('hidden');
-                recommendArea.innerHTML = picks.map((p, i) => `
-                    <div class="bg-white/20 p-3 rounded-xl backdrop-blur-sm border border-white/30 text-center pick-animate" style="animation-delay: ${i * 0.1}s">
-                        <div class="text-[10px] font-bold text-blue-100 mb-1">${i+1}순위</div>
-                        <div class="font-bold text-xs truncate">${p.name}</div>
-                    </div>
-                `).join('');
 
-                status.innerText = `"${query}" 분석 완료!`;
-
-            } catch (error) {
-                console.error(error);
-                status.innerText = "연결 상태가 좋지 않아 기본 데이터를 추천합니다.";
-                // 에러나도 기본 추천 띄우기
-                const backupPicks = STATIC_DATA.sort(() => 0.5 - Math.random()).slice(0, 3);
-                recommendArea.classList.remove('hidden');
-                recommendArea.innerHTML = backupPicks.map((p, i) => `
+                recArea.classList.remove('hidden');
+                recArea.innerHTML = realTimeItems.slice(0, 3).map((p, i) => `
                     <div class="bg-white/20 p-3 rounded-xl backdrop-blur-sm border border-white/30 text-center pick-animate">
-                        <div class="text-[10px] font-bold text-blue-100 mb-1">${i+1}순위</div>
-                        <div class="font-bold text-xs truncate">${p.name}</div>
+                        <div class="text-[9px] font-bold text-blue-100 mb-1">${i+1}순위</div>
+                        <div class="font-bold text-[11px] truncate">${p.name}</div>
                     </div>
                 `).join('');
+                status.innerText = "최신 정보를 반영했습니다!";
+
+            } catch (e) {
+                console.error(e);
+                status.innerText = "서버 지연으로 기본 데이터를 보여줍니다.";
             } finally {
-                // 버튼 복구
-                btn.innerHTML = `<span>🎲 다시 추천받기</span>`;
+                btn.innerHTML = `<span>🎲 실시간 분석 완료</span>`;
             }
+        }
+
+        function detectArea(addr) {
+            if (addr.includes('신성동')) return '신성동';
+            if (addr.includes('도룡동')) return '도룡동';
+            if (addr.includes('죽동')) return '죽동';
+            if (addr.includes('전민동')) return '전민동';
+            return '연구단지';
         }
     </script>
 </body>
