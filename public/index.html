@@ -84,30 +84,32 @@
                 if (data.items) {
                     currentData = data.items.map((item, idx) => {
                         const sCat = simplifyCategory(item.category);
-                        
-                        // [판별 정밀도 향상] 이름과 카테고리에서 공백을 제거하고 검사
                         const checkString = (item.name + item.category).replace(/\s/g, '');
                         
                         let calcPrice = 10000;
                         
-                        // 럭셔리 키워드 (더 촘촘하게 추가)
-                        const luxuryWords = ['한우', '소고기', '스테이크', '참치', '스시', '오마카세', '일식집', '회집', '횟집', '장어', '복어', '갈비집', '숯불구이', '한정식'];
+                        // 1. 고가 메뉴 키워드 (절대 1만원 미만 불가)
+                        const luxuryWords = ['한우', '소고기', '스테이크', '참치', '스시', '오마카세', '일식집', '회집', '횟집', '장어', '복어', '갈비집', '숯불구이', '한정식', '보리밥', '정식'];
                         const isLuxury = luxuryWords.some(word => checkString.includes(word));
 
+                        // 2. 확실한 저가 메뉴 키워드 (만원 미만 가능)
+                        const budgetWords = ['국밥', '해장국', '순대국', '짜장', '짬뽕', '떡볶이', '김밥', '라면', '튀김', '토스트', '국수', '칼국수', '수제비'];
+                        const isBudgetDefault = budgetWords.some(word => checkString.includes(word));
+
                         if (isLuxury) {
-                            calcPrice = Math.floor(Math.random() * 50000) + 35000; // 3.5만~8.5만
-                        } else if (sCat === '한식') {
-                            calcPrice = Math.floor(Math.random() * 4000) + 10000; 
+                            calcPrice = Math.floor(Math.random() * 30000) + 35000; // 3.5만 이상
+                        } else if (isBudgetDefault || sCat === '분식') {
+                            calcPrice = Math.floor(Math.random() * 2000) + 8000;  // 8천원 ~ 1만원 사이
                         } else if (sCat === '중식') {
-                            calcPrice = Math.floor(Math.random() * 5000) + 9000;  
+                            // 짜장/짬뽕 키워드 없으면 일반 중식 가격
+                            calcPrice = Math.floor(Math.random() * 4000) + 11000; 
                         } else if (sCat === '일식') {
-                            calcPrice = Math.floor(Math.random() * 6000) + 13000; 
+                            calcPrice = Math.floor(Math.random() * 5000) + 14000; 
                         } else if (sCat === '양식') {
-                            calcPrice = Math.floor(Math.random() * 8000) + 16000; 
-                        } else if (sCat === '분식') {
-                            calcPrice = Math.floor(Math.random() * 3000) + 7000;  
+                            calcPrice = Math.floor(Math.random() * 7000) + 16000; 
                         } else {
-                            calcPrice = 10000;
+                            // 일반 한식 및 기타 (1.1만 ~ 1.5만)
+                            calcPrice = Math.floor(Math.random() * 4000) + 11000;
                         }
 
                         return {
