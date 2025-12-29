@@ -3,10 +3,10 @@ const fetch = require('node-fetch');
 export default async function handler(req, res) {
   const NAVER_ID = 'Id2KWzmixu2C7UpDpkao';
   const NAVER_SECRET = 'd4sshbGFPj';
-  const KAKAO_KEY = '여기에_카카오_REST_API_키_입력'; // 발급받으신 REST API 키를 입력하세요.
+  const KAKAO_KEY = 'ab621003638d493826e9676ee16f6fb9'; // 발급받으신 REST API 키를 입력하세요.
 
   const locations = [
-    '신성동', '도룡동', '죽동', '어은동', '전민동', '가정동', '관평동', 
+    '신성동', '도룡동', '죽동', '어은동', '전민동', '가정동',  
     '문지동', '하기동', '궁동', '노은동', '만년동', '지족동', '반석동', '월평동', '원촌동'
   ];
 
