@@ -38,7 +38,7 @@
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 골라준다! 🎉</h2>
+                <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 골라준다!</h2>
                 <p class="text-[11px] text-blue-100 font-medium mb-6" id="status-text">실시간 맛집 데이터를 동기화 중...</p>
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
@@ -87,28 +87,22 @@
                         const checkString = (item.name + item.category).replace(/\s/g, '');
                         
                         let calcPrice = 10000;
-                        
-                        // 1. 고가 메뉴 키워드 (절대 1만원 미만 불가)
                         const luxuryWords = ['한우', '소고기', '스테이크', '참치', '스시', '오마카세', '일식집', '회집', '횟집', '장어', '복어', '갈비집', '숯불구이', '한정식', '보리밥', '정식'];
                         const isLuxury = luxuryWords.some(word => checkString.includes(word));
-
-                        // 2. 확실한 저가 메뉴 키워드 (만원 미만 가능)
                         const budgetWords = ['국밥', '해장국', '순대국', '짜장', '짬뽕', '떡볶이', '김밥', '라면', '튀김', '토스트', '국수', '칼국수', '수제비'];
                         const isBudgetDefault = budgetWords.some(word => checkString.includes(word));
 
                         if (isLuxury) {
-                            calcPrice = Math.floor(Math.random() * 30000) + 35000; // 3.5만 이상
+                            calcPrice = Math.floor(Math.random() * 30000) + 35000;
                         } else if (isBudgetDefault || sCat === '분식') {
-                            calcPrice = Math.floor(Math.random() * 2000) + 8000;  // 8천원 ~ 1만원 사이
+                            calcPrice = Math.floor(Math.random() * 2000) + 8000;
                         } else if (sCat === '중식') {
-                            // 짜장/짬뽕 키워드 없으면 일반 중식 가격
                             calcPrice = Math.floor(Math.random() * 4000) + 11000; 
                         } else if (sCat === '일식') {
                             calcPrice = Math.floor(Math.random() * 5000) + 14000; 
                         } else if (sCat === '양식') {
                             calcPrice = Math.floor(Math.random() * 7000) + 16000; 
                         } else {
-                            // 일반 한식 및 기타 (1.1만 ~ 1.5만)
                             calcPrice = Math.floor(Math.random() * 4000) + 11000;
                         }
 
@@ -122,7 +116,8 @@
                         };
                     });
                     filterAndRender();
-                    status.innerText = `현재 ${currentData.length}개의 맛집 정보가 준비되었습니다!`;
+                    // 2) 상태 메시지 문구 수정 (늘프가 xx개 식당을 준비해보았어요. 😊)
+                    status.innerText = `늘프가 ${currentData.length}개 식당을 준비해보았어요😊`;
                 }
             } catch (e) { status.innerText = "데이터 로딩 오류"; }
         }
