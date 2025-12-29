@@ -6,19 +6,17 @@
     <title>NRF Foodie - 늘프의 점심 가이드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" integrity="sha384-lLeS4Yqio8kXsoX92KNfU8qGYv5Vog1KmqIn9NReLuzYhVpT0+tXpGZJ7T5O5V0X" crossorigin="anonymous"></script>
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .res-card { transition: all 0.2s ease; border-radius: 1.25rem; }
         .res-card:active { transform: scale(0.97); }
-        .pick-card { cursor: pointer; transition: transform 0.2s ease; }
+        .pick-card { cursor: pointer; transition: transform 0.2s ease; position: relative; }
         .pick-animate { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-        @keyframes bounceIn { 
-            0% { opacity: 0; transform: scale(0.3); } 
-            50% { opacity: 1; transform: scale(1.05); } 
-            100% { transform: scale(1); } 
-        }
+        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.05); } 100% { transform: scale(1); } }
+        .share-btn { position: absolute; top: -8px; right: -8px; background: #FEE500; border-radius: 50%; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="text-slate-800 pb-24">
@@ -26,7 +24,7 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2.5" onclick="location.reload()">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-100">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </div>
                 <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
@@ -38,8 +36,8 @@
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 골라준다!</h2>
-                <p class="text-[11px] text-blue-100 font-medium mb-6" id="status-text">실시간 맛집 데이터를 동기화 중...</p>
+                <h2 class="font-black text-xl mb-1 italic" id="day-theme-title">오늘 점심은 늘프가 골라준다!</h2>
+                <p class="text-[11px] text-blue-100 font-medium mb-6" id="status-text">늘프가 맛집 정보를 정리하고 있어요...</p>
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
                     <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
@@ -55,26 +53,36 @@
                 <div class="flex flex-col gap-1.5"><div class="flex gap-2 overflow-x-auto no-scrollbar" id="price-filter"></div></div>
                 <div class="flex flex-col gap-1.5"><div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div></div>
             </div>
-            <div class="flex justify-between items-center px-1">
-                <h3 class="font-black text-slate-900 text-sm italic tracking-tighter text-blue-600">LUNCH LIST <span class="text-slate-400 ml-1" id="count-badge">0</span></h3>
-            </div>
             <div id="restaurant-list" class="space-y-4"></div>
-            
-            <div class="pt-8 pb-4 text-center">
-                <p class="text-[9px] text-slate-300 leading-relaxed font-medium">
-                    * 본 앱의 별점과 가격은 실시간 업종 데이터와<br>
-                    늘프 알고리즘(AI 추정치)을 기반으로 산출되었습니다.
-                </p>
-            </div>
         </section>
     </main>
 
     <script>
+        // 1. 카카오 초기화 (본인의 JavaScript 키를 입력하세요)
+        try {
+            Kakao.init('802ff44db94c3d61d0952207d300f984');
+        } catch(e) { console.error("카카오 초기화 실패"); }
+
         let currentData = [];
         let fArea = '전체', fPrice = '전체', fCat = '전체';
         const areas = ['전체', '신성동', '도룡동', '죽동', '어은동(궁동)', '전민동', '기타'];
         const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
+
+        // 요일 테마 설정
+        function setDayTheme() {
+            const day = new Date().getDay();
+            const themes = [
+                "일요일은 내일 위해 푹 쉬기! 🏠",
+                "월요병 극복! 기력 보충 고기데이 🥩",
+                "화끈하게 먹고 화이팅 하는 날 🔥",
+                "수요일은 수수하게 백반 어때요? 🍚",
+                "목 빠지게 주말 기다리는 목요일 🍲",
+                "고생했어! 멀리 나가는 금요일 맛집 🚗",
+                "즐거운 토요일 맛점 하세요! 🍕"
+            ];
+            document.getElementById('day-theme-title').innerText = themes[day];
+        }
 
         async function deepFetchData() {
             const status = document.getElementById('status-text');
@@ -85,26 +93,13 @@
                     currentData = data.items.map((item, idx) => {
                         const sCat = simplifyCategory(item.category);
                         const checkString = (item.name + item.category).replace(/\s/g, '');
-                        
                         let calcPrice = 10000;
-                        const luxuryWords = ['한우', '소고기', '스테이크', '참치', '스시', '오마카세', '일식집', '회집', '횟집', '장어', '복어', '갈비집', '숯불구이', '한정식', '보리밥', '정식'];
-                        const isLuxury = luxuryWords.some(word => checkString.includes(word));
-                        const budgetWords = ['국밥', '해장국', '순대국', '짜장', '짬뽕', '떡볶이', '김밥', '라면', '튀김', '토스트', '국수', '칼국수', '수제비'];
-                        const isBudgetDefault = budgetWords.some(word => checkString.includes(word));
+                        const luxuryWords = ['한우', '소고기', '스테이크', '참치', '스시', '오마카세', '장어', '복어', '한정식'];
+                        const budgetWords = ['국밥', '해장국', '순대국', '짜장', '짬뽕', '떡볶이', '김밥', '라면', '국수', '칼국수'];
 
-                        if (isLuxury) {
-                            calcPrice = Math.floor(Math.random() * 30000) + 35000;
-                        } else if (isBudgetDefault || sCat === '분식') {
-                            calcPrice = Math.floor(Math.random() * 2000) + 8000;
-                        } else if (sCat === '중식') {
-                            calcPrice = Math.floor(Math.random() * 4000) + 11000; 
-                        } else if (sCat === '일식') {
-                            calcPrice = Math.floor(Math.random() * 5000) + 14000; 
-                        } else if (sCat === '양식') {
-                            calcPrice = Math.floor(Math.random() * 7000) + 16000; 
-                        } else {
-                            calcPrice = Math.floor(Math.random() * 4000) + 11000;
-                        }
+                        if (luxuryWords.some(w => checkString.includes(w))) calcPrice = 40000;
+                        else if (budgetWords.some(w => checkString.includes(w)) || sCat === '분식') calcPrice = 9000;
+                        else calcPrice = 12000;
 
                         return {
                             name: item.name,
@@ -116,8 +111,7 @@
                         };
                     });
                     filterAndRender();
-                    // 2) 상태 메시지 문구 수정 (늘프가 xx개 식당을 준비해보았어요. 😊)
-                    status.innerText = `늘프가 ${currentData.length}개 식당을 준비해보았어요😊`;
+                    status.innerText = `늘프가 ${currentData.length}개 식당을 준비해보았어요. 😊`;
                 }
             } catch (e) { status.innerText = "데이터 로딩 오류"; }
         }
@@ -134,8 +128,8 @@
         function simplifyCategory(cat) {
             if(cat.includes('한식')) return '한식';
             if(cat.includes('중식')) return '중식';
-            if(cat.includes('일식') || cat.includes('초밥')) return '일식';
-            if(cat.includes('양식') || cat.includes('이탈리아')) return '양식';
+            if(cat.includes('일식')) return '일식';
+            if(cat.includes('양식')) return '양식';
             if(cat.includes('분식')) return '분식';
             return '기타';
         }
@@ -157,29 +151,22 @@
 
         function renderList(list) {
             const container = document.getElementById('restaurant-list');
-            document.getElementById('count-badge').innerText = list.length;
             container.innerHTML = list.map(item => `
                 <div class="res-card bg-white p-5 border border-slate-100 shadow-sm flex justify-between items-center" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
                     <div class="flex-1 pr-4">
-                        <div class="flex gap-2 items-center mb-1">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span>
-                            <span class="text-[9px] font-black text-blue-600 uppercase tracking-widest">#${item.cat}</span>
-                        </div>
-                        <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
-                        <p class="text-[11px] text-slate-400 font-medium truncate">${item.menu}</p>
+                        <div class="flex gap-2 items-center mb-1"><span class="text-[9px] font-black text-slate-400 uppercase">${item.area}</span><span class="text-[9px] font-black text-blue-600">#${item.cat}</span></div>
+                        <h3 class="font-black text-slate-900 text-base">${item.name}</h3>
+                        <p class="text-[11px] text-slate-400 truncate">${item.menu}</p>
                     </div>
-                    <div class="text-right shrink-0">
-                        <div class="text-blue-600 font-black text-lg mb-1">★ ${item.score}</div>
-                        <div class="text-[8px] font-black text-blue-300 uppercase italic">${item.price.toLocaleString()}원~</div>
-                    </div>
+                    <div class="text-right"><div class="text-blue-600 font-black text-lg">★ ${item.score}</div><div class="text-[8px] font-black text-blue-300 uppercase">${item.price.toLocaleString()}원~</div></div>
                 </div>
             `).join('');
         }
 
         function renderFilters() {
-            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
-            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
-            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
+            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
+            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
+            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
         }
 
         function setFilter(type, val) { 
@@ -197,19 +184,45 @@
                 const recArea = document.getElementById('recommend-area');
                 recArea.classList.remove('hidden');
                 recArea.innerHTML = picks.map((p, i) => `
-                    <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-card pick-animate shadow-lg" 
-                         onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name)}', '_blank')"
-                         style="animation-delay: ${i * 0.1}s">
+                    <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-card pick-animate shadow-lg" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name)}', '_blank')" style="animation-delay: ${i * 0.1}s">
                         <div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div>
                         <div class="font-black text-[11px] truncate text-white">${p.name}</div>
-                        <div class="text-[8px] text-blue-200 mt-1">상세보기</div>
+                        <div class="share-btn" onclick="event.stopPropagation(); shareKakao('${p.name}', '${p.score}', '${p.cat}')">
+                            <img src="https://developers.kakao.com/assets/img/about/logos/kakaotalksharing/kakaotalk_sharing_btn_small.png" width="16">
+                        </div>
                     </div>
                 `).join('');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => { renderFilters(); deepFetchData(); });
+        function shareKakao(name, score, cat) {
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: `오늘 점심 여기 어때요? 늘프 PICK!`,
+                    description: `${name} (★${score}) | #${cat}`,
+                    imageUrl: 'https://nrf.re.kr/resources/img/contents/character/nulph_intro.png',
+                    link: {
+                        mobileWebUrl: `https://map.naver.com/v5/search/${encodeURIComponent(name)}`,
+                        webUrl: `https://map.naver.com/v5/search/${encodeURIComponent(name)}`,
+                    },
+                },
+                buttons: [{
+                    title: '지도 확인하기',
+                    link: {
+                        mobileWebUrl: `https://map.naver.com/v5/search/${encodeURIComponent(name)}`,
+                        webUrl: `https://map.naver.com/v5/search/${encodeURIComponent(name)}`,
+                    },
+                }],
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            setDayTheme();
+            renderFilters(); 
+            deepFetchData(); 
+        });
     </script>
 </body>
 </html>
