@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie</title>
+    <title>NRF Foodie Map</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -35,14 +35,14 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2.5" onclick="location.reload()">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-100">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </div>
                 <div>
                     <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Real-time GPS Guide</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter italic">NULPH Lunch Pick</p>
                 </div>
             </div>
             <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" referrerpolicy="no-referrer" alt="늘프" class="h-10 w-auto">
@@ -54,8 +54,8 @@
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
                 <div class="mb-6">
-                    <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 쏜다!</h2>
-                    <p class="text-xs text-blue-100 font-medium" id="status-text">연구단지 전역의 데이터를 긁어모으는 중...</p>
+                    <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 골라준다! 🦕</h2>
+                    <p class="text-xs text-blue-100 font-medium" id="status-text">연구단지 전역의 데이터를 동기화 중...</p>
                 </div>
 
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
@@ -71,24 +71,24 @@
         <section class="space-y-4">
             <div class="sticky top-[65px] z-40 bg-[#F8FAFC]/95 backdrop-blur-md py-2 space-y-3">
                 <div class="flex flex-col gap-1.5">
-                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Neighborhood</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1 tracking-widest">Neighborhood</span>
                     <div class="flex gap-2 overflow-x-auto no-scrollbar" id="area-filter"></div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Price Range</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1 tracking-widest">Price Range</span>
                     <div class="flex gap-2 overflow-x-auto no-scrollbar" id="price-filter"></div>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <span class="text-[10px] font-black text-slate-400 uppercase px-1">Category</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase px-1 tracking-widest">Category</span>
                     <div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div>
                 </div>
             </div>
 
             <div class="flex justify-between items-center px-1">
-                <h3 class="font-black text-slate-900 text-sm italic">REST-LIST <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
+                <h3 class="font-black text-slate-900 text-sm italic tracking-tighter">REST-LIST <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
                 <div class="flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Deep Syncing...</span>
+                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Live Activeing</span>
                 </div>
             </div>
 
@@ -97,7 +97,6 @@
     </main>
 
     <script>
-        // 기본 데이터
         const STATIC_DATA = [
             { id: 1, name: "숯골원냉면", area: "신성동", cat: "한식", menu: "평양냉면, 꿩냉면", price: 11000, score: 4.5, isRealTime: false },
             { id: 2, name: "천리집", area: "신성동", cat: "한식", menu: "순대국밥", price: 9000, score: 4.6, isRealTime: false }
@@ -105,46 +104,58 @@
 
         let currentData = [...STATIC_DATA];
         let fArea = '전체', fPrice = '전체', fCat = '전체';
+        
+        // [사용자 요청] UI 필터는 메인 동네 5개 + 기타로 제한하여 깔끔하게 유지
         const areas = ['전체', '신성동', '도룡동', '죽동', '어은동(궁동)', '전민동', '기타'];
         const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
 
         document.addEventListener('DOMContentLoaded', () => {
             renderFilters();
-            deepFetchData(); // 깊은 검색 시작
+            deepFetchData();
         });
 
         async function deepFetchData() {
             const status = document.getElementById('status-text');
             try {
-                // api/food 주소로 요청 (동네별 쪼개기 검색 수행)
                 const response = await fetch(`/api/food`);
                 const data = await response.json();
 
                 if (data.items && data.items.length > 0) {
                     const realItems = data.items.map((item, idx) => {
-                        const area = detectArea(item.roadAddress || item.address);
+                        // 주소를 기반으로 지역 분류 (5개 외에는 모두 '기타'로 처리)
+                        const rawArea = detectAreaRaw(item.roadAddress || item.address);
                         return {
                             id: Date.now() + idx,
                             name: item.title.replace(/<[^>]*>?/gm, ''),
-                            area: area,
+                            area: rawArea, // 여기서 신성, 도룡, 죽동, 어은, 전민, 기타 중 하나가 할당됨
                             cat: item.category.split('>')[0] || '기타',
                             menu: item.category.replace(/>/g, ' '),
                             price: 12000,
                             score: (Math.random() * 0.4 + 4.3).toFixed(1),
-                            isRealTime: true,
-                            fullAddress: item.address
+                            isRealTime: true
                         };
                     });
 
                     currentData = [...realItems, ...STATIC_DATA];
                     filterAndRender();
-                    status.innerText = `연구단지 인근 맛집 ${currentData.length}개를 모두 찾아냈습니다! 🦕`;
+                    status.innerText = `총 ${currentData.length}개의 맛집 정보를 동기화했습니다! 🦕`;
                 }
             } catch (e) {
                 status.innerText = "네트워크 문제로 로컬 데이터만 표시합니다.";
                 filterAndRender();
             }
+        }
+
+        // [핵심 로직] 주소를 받아서 메인 5개 지역에 해당하지 않으면 모두 '기타'로 분류
+        function detectAreaRaw(addr) {
+            if (addr.includes('신성동')) return '신성동';
+            if (addr.includes('도룡동')) return '도룡동';
+            if (addr.includes('죽동')) return '죽동';
+            if (addr.includes('전민동')) return '전민동';
+            if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
+            // 그 외 장대동, 가정동, 노은동 등은 모두 UI상 '기타' 필터로 분류됨
+            return '기타';
         }
 
         function renderFilters() {
@@ -214,16 +225,6 @@
                 `).join('');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        }
-
-        function detectArea(addr) {
-            if (addr.includes('신성동')) return '신성동';
-            if (addr.includes('도룡동')) return '도룡동';
-            if (addr.includes('죽동')) return '죽동';
-            if (addr.includes('전민동')) return '전민동';
-            if (addr.includes('어은동') || addr.includes('궁동')) return '어은동(궁동)';
-            if (addr.includes('유성구')) return '유성구';
-            return '기타';
         }
     </script>
 </body>
