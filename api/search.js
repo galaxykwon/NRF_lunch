@@ -1,20 +1,13 @@
 const fetch = require('node-fetch');
 
 export default async function handler(req, res) {
-  // GET 요청이 아니면 거절
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const keyword = req.query.keyword || '대전 연구단지 맛집';
-
-  // 제공해주신 네이버 개발자 키 적용
+  const keyword = req.query.keyword || '대전 유성구 연구단지 맛집';
   const CLIENT_ID = 'Id2KWzmixu2C7UpDpkao';
   const CLIENT_SECRET = 'd4sshbGFPj';
 
   try {
-    // api/search.js 내부 수정 포인트
-const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(keyword)}&display=50&sort=comment`;
+    // [중요] display=50 으로 수정하여 50개를 요청합니다.
+    const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(keyword)}&display=50&sort=comment`;
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -24,17 +17,9 @@ const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURI
       }
     });
 
-    if (!response.ok) {
-      throw new Error(`Naver API Error: ${response.status}`);
-    }
-
     const data = await response.json();
-    
-    // 성공적으로 데이터를 브라우저로 반환
     res.status(200).json(data);
-
   } catch (error) {
-    console.error('Server Error:', error);
-    res.status(500).json({ error: 'Failed to fetch data' });
+    res.status(500).json({ error: 'API 호출 실패' });
   }
 }
