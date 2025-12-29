@@ -13,8 +13,8 @@ export default async function handler(req, res) {
   const CLIENT_SECRET = 'd4sshbGFPj';
 
   try {
-    // 네이버 지역 검색 API 호출 (검색어, 출력개수 5개, 관련도순)
-    const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(keyword)}&display=5&sort=comment`;
+    // api/search.js 내부 수정 포인트
+const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(keyword)}&display=50&sort=comment`;
 
     const response = await fetch(apiUrl, {
       method: 'GET',
