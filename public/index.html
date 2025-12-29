@@ -87,12 +87,16 @@
                 const response = await fetch(`/api/food`);
                 const data = await response.json();
                 if (data.items) {
-                    currentData = data.items.map(item => ({
-                        ...item,
-                        area: detectAreaRaw(item.address),
-                        cat: simplifyCategory(item.category),
-                        score: (4.9 - (Math.random() * 0.5)).toFixed(1)
-                    }));
+                    currentData = data.items.map(item => {
+                        // 별점 부여 기준: 단골집(isVip)은 4.8~4.9, 일반은 4.0~4.7
+                        let baseScore = item.isVip ? (4.8 + Math.random() * 0.1) : (4.0 + Math.random() * 0.7);
+                        return {
+                            ...item,
+                            area: detectAreaRaw(item.address),
+                            cat: simplifyCategory(item.category),
+                            score: baseScore.toFixed(1)
+                        };
+                    });
                     filterAndRender();
                     status.innerText = `늘프가 ${currentData.length}개 식당을 준비했어요! 😊`;
                 }
@@ -120,7 +124,7 @@
                 else if (fPrice === '2~3만원') mP = i.price >= 20000 && i.price < 30000;
                 else if (fPrice === '3만원 이상') mP = i.price >= 30000;
                 return mA && mC && mS && mP;
-            }).sort((a,b) => b.score - a.score);
+            }).sort((a,b) => b.score - a.score); // 높은 별점 순으로 정렬
             
             fetchReviewsAndRender(filtered);
             renderFilters();
@@ -140,7 +144,10 @@
                 <div class="res-card p-5 mb-4">
                     <div class="flex justify-between items-center mb-3" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
                         <div class="flex-1 pr-4">
-                            <div class="flex gap-2 items-center mb-1"><span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span></div>
+                            <div class="flex gap-2 items-center mb-1">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span>
+                                ${item.isVip ? '<span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase">늘프추천</span>' : ''}
+                            </div>
                             <h3 class="font-black text-slate-900 text-base">${item.name}</h3>
                             <p class="text-[11px] text-slate-400 truncate">${item.category}</p>
                         </div>
