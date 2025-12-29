@@ -13,11 +13,12 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .res-card { transition: all 0.2s ease; border-radius: 1.25rem; overflow: hidden; background: white; border: 1px solid #f1f5f9; }
         .res-card:active { transform: scale(0.97); }
-        .review-box { background: #f8fafc; border-radius: 12px; padding: 10px; margin-top: 12px; border: 1px solid #f1f5f9; }
+        .review-box { background: #f8fafc; border-radius: 12px; padding: 12px; margin-top: 12px; border: 1px solid #f1f5f9; }
         .review-item { font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; gap: 4px; }
-        .review-input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; }
-        .star-rating { display: flex; gap: 4px; color: #cbd5e1; cursor: pointer; }
+        .review-input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .star-rating { display: flex; gap: 6px; color: #cbd5e1; cursor: pointer; font-size: 18px; }
         .star-rating .active { color: #facc15; }
+        .star-rating span:hover { transform: scale(1.2); transition: 0.1s; }
     </style>
 </head>
 <body class="text-slate-800 pb-24">
@@ -90,7 +91,6 @@
             } catch (e) { document.getElementById('status-text').innerText = "데이터 로딩 오류"; }
         }
 
-        // 별점 클릭 처리
         function setStar(resName, rating) {
             const safeId = resName.replace(/\s/g, '');
             const stars = document.querySelectorAll(`#star-group-${safeId} span`);
@@ -110,7 +110,7 @@
 
             const { error } = await supabaseClient.from('reviews').insert([{ restaurant_name: resName, comment: comment, rating: rating }]);
             if(error) alert("등록 실패");
-            else { alert("임직원 의견이 반영되었습니다!"); location.reload(); }
+            else { alert("의견이 반영되었습니다!"); location.reload(); }
         }
 
         async function filterAndRender() {
@@ -121,7 +121,7 @@
                 const myReviews = reviews?.filter(r => r.restaurant_name === item.name) || [];
                 const avgRating = myReviews.length > 0 
                     ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
-                    : (item.isVip ? (4.5 + Math.random() * 0.4).toFixed(1) : (3.5 + Math.random() * 1.0).toFixed(1));
+                    : (item.isVip ? (4.6 + Math.random() * 0.3).toFixed(1) : (3.8 + Math.random() * 0.8).toFixed(1));
                 
                 return { ...item, 
                          area: detectAreaRaw(item.address), 
@@ -157,12 +157,12 @@
                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${item.area}</span>
                                 ${item.isVip ? '<span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold">VIP</span>' : ''}
                             </div>
-                            <h3 class="font-black text-slate-900 text-base">${item.name}</h3>
+                            <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
                             <p class="text-[11px] text-slate-400 truncate">${item.category}</p>
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-blue-600 font-black text-lg">★ ${item.realScore}</div>
-                            <div class="text-[9px] text-slate-400 font-bold">리뷰 ${item.reviewCount}개</div>
+                            <div class="text-[9px] text-slate-400 font-bold tracking-tighter">리뷰 ${item.reviewCount}개</div>
                         </div>
                     </div>
                     <div class="review-box">
@@ -172,8 +172,8 @@
                                 <span onclick="setStar('${item.name}', 1)">★</span><span onclick="setStar('${item.name}', 2)">★</span><span onclick="setStar('${item.name}', 3)">★</span><span onclick="setStar('${item.name}', 4)">★</span><span onclick="setStar('${item.name}', 5)">★</span>
                             </div>
                             <div class="flex gap-2">
-                                <input type="text" id="input-${safeId}" placeholder="한줄평..." class="flex-1 text-xs border-b border-slate-200 outline-none">
-                                <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px]">등록</button>
+                                <input type="text" id="input-${safeId}" placeholder="한줄평 남기기..." class="flex-1 text-xs border-b border-slate-200 outline-none pb-1">
+                                <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button>
                             </div>
                         </div>
                     </div>
@@ -182,17 +182,19 @@
         }
 
         function detectAreaRaw(addr) {
-            if (addr === '신성동' || addr.includes('신성동') || addr.includes('자운동') || addr.includes('화암동')) return '신성동';
-            if (addr === '도룡동' || addr.includes('도룡동')) return '도룡동';
-            if (addr === '죽동' || addr.includes('죽동')) return '죽동';
-            if (addr === '전민동' || addr.includes('전민동') || addr.includes('문지동')) return '전민동';
-            if (addr === '어은동' || addr === '궁동' || addr === '봉명동' || addr.includes('어은') || addr.includes('궁동') || addr.includes('봉명')) return '어은/궁동/봉명';
-            if (addr === '노은동' || addr === '반석동' || addr.includes('노은') || addr.includes('반석') || addr.includes('지족')) return '노은/반석';
-            if (addr === '만년동' || addr === '둔산동' || addr.includes('만년') || addr.includes('둔산')) return '만년/둔산';
+            if (!addr) return '기타';
+            if (addr.includes('신성동') || addr.includes('자운동') || addr.includes('화암동')) return '신성동';
+            if (addr.includes('도룡동')) return '도룡동';
+            if (addr.includes('죽동')) return '죽동';
+            if (addr.includes('전민동') || addr.includes('문지동')) return '전민동';
+            if (addr.includes('어은동') || addr.includes('궁동') || addr.includes('봉명동')) return '어은/궁동/봉명';
+            if (addr.includes('노은동') || addr.includes('반석동') || addr.includes('지족')) return '노은/반석';
+            if (addr.includes('만년동') || addr.includes('둔산동')) return '만년/둔산';
             return '기타';
         }
 
         function simplifyCategory(cat) {
+            if (!cat) return '기타';
             if(cat.includes('한식')) return '한식'; if(cat.includes('중식')) return '중식'; if(cat.includes('일식')) return '일식'; if(cat.includes('양식')) return '양식'; if(cat.includes('분식')) return '분식'; return '기타';
         }
 
