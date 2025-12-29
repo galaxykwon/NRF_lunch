@@ -13,8 +13,6 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .res-card { transition: all 0.2s ease; border-radius: 1.25rem; overflow: hidden; background: white; border: 1px solid #f1f5f9; }
         .res-card:active { transform: scale(0.97); }
-        .pick-animate { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.05); } 100% { transform: scale(1); } }
         .review-box { background: #f8fafc; border-radius: 12px; padding: 10px; margin-top: 12px; border: 1px solid #f1f5f9; }
         .review-item { font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; gap: 4px; }
         .review-input-group { display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; }
@@ -63,7 +61,6 @@
     </main>
 
     <script>
-        // --- Supabase 설정 (본인 정보를 입력하세요) ---
         const SB_URL = 'https://pbfgygmykizekzkzjrmo.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZmd5Z215a2l6ZWt6a3pqcm1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODkwMzcsImV4cCI6MjA4MjU2NTAzN30.EbZbSDhDfO8IYZq1vguctih8T_7ChDGpfsubP_mhCuY';
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
@@ -76,7 +73,7 @@
 
         function setDayTheme() {
             const day = new Date().getDay();
-            const themes = ["평화로운 일요일! 🏠", "월요병 극복! 기력 보충 고기데이는 어때요? 😊", "화끈하게 먹고 힘내봐요! 🔥", "수요일은 수수하게 백반 어때요? 🍚", "목 빠지게 주말 기다리는 국물 요리! 🍲", "고생했어! 멀리 나가는 금요일 맛집! 🚗", "즐거운 토요일 행복 충전! 🍕"];
+            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화끈하게 화이팅! 🔥", "수수하게 백반 어때요? 🍚", "국물 요리가 땡기는 목요일! 🍲", "멀리 나가는 금요일! 🚗", "행복한 토요일! 🍕"];
             document.getElementById('day-theme-sub').innerText = themes[day];
         }
 
@@ -91,9 +88,9 @@
                         const checkString = (item.name + item.category).replace(/\s/g, '');
                         let calcPrice = 12500;
                         if (['한우','소고기','참치','회','스시','스테이크'].some(w => checkString.includes(w))) calcPrice = 45000;
-                        else if (['국밥','해장국','짜장','짬뽕','분식','떡볶이','순대'].some(w => checkString.includes(w))) calcPrice = 9000;
+                        else if (['국밥','해장국','짜장','짬뽕','분식','떡볶이'].some(w => checkString.includes(w))) calcPrice = 9000;
 
-                        return { name: item.name, address: item.address, area: detectAreaRaw(item.address), cat: sCat, menu: item.category.replace(/>/g, ' '), price: calcPrice, score: (4.9 - (idx * 0.002) - (Math.random() * 0.1)).toFixed(1) };
+                        return { name: item.name, area: detectAreaRaw(item.address), cat: sCat, menu: item.category.replace(/>/g, ' '), price: calcPrice, score: (4.9 - (idx * 0.002) - (Math.random() * 0.1)).toFixed(1) };
                     });
                     filterAndRender();
                     status.innerText = `늘프가 ${currentData.length}개 식당을 준비해보았어요. 😊`;
@@ -106,9 +103,16 @@
             const input = document.getElementById(`input-${safeId}`);
             const comment = input.value.trim();
             if(!comment) return alert("내용을 입력해주세요!");
+
             const { error } = await supabaseClient.from('reviews').insert([{ restaurant_name: resName, comment: comment, rating: 5 }]);
-            if(error) alert("저장 실패");
-            else { alert("리뷰 등록 완료!"); input.value = ""; filterAndRender(); }
+            if(error) {
+                console.error(error);
+                alert("등록 실패: 테이블 설정(Column 이름 등)을 확인해주세요.");
+            } else {
+                alert("등록 완료!");
+                input.value = "";
+                filterAndRender();
+            }
         }
 
         async function filterAndRender() {
@@ -117,15 +121,13 @@
                 const mA = fArea === '전체' || i.area === fArea;
                 const mC = fCat === '전체' || i.cat === fCat;
                 const mS = i.name.toLowerCase().includes(searchVal);
-                let mP = true;
-                if(fPrice === '1만원 미만') mP = i.price < 10000;
-                else if(fPrice === '1~2만원') mP = i.price >= 10000 && i.price < 20000;
-                else if(fPrice === '2~3만원') mP = i.price >= 20000 && i.price < 30000;
-                else if(fPrice === '3만원 이상') mP = i.price >= 30000;
-                return mA && mC && mS && mP;
+                return mA && mC && mS;
             }).sort((a,b) => b.score - a.score);
             
-            const { data: reviews } = await supabaseClient.from('reviews').select('*').order('created_at', { ascending: false });
+            // 400 에러 방지를 위해 .order 구문 제거
+            const { data: reviews, error } = await supabaseClient.from('reviews').select('*');
+            if (error) console.error("리뷰 불러오기 실패:", error);
+            
             renderList(filtered, reviews || []);
         }
 
@@ -148,7 +150,7 @@
                         </div>
                     </div>
                     <div class="review-box">
-                        <div class="review-items">${myReviews.length > 0 ? myReviews.slice(0, 3).map(r => `<div class="review-item"><span>💬</span><span>${r.comment}</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">임직원 첫 리뷰를 남겨주세요!</div>'}</div>
+                        <div class="review-items">${myReviews.length > 0 ? myReviews.slice(-3).map(r => `<div class="review-item"><span>💬</span><span>${r.comment}</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">임직원 첫 리뷰를 남겨주세요!</div>'}</div>
                         <div class="review-input-group">
                             <input type="text" id="input-${safeId}" placeholder="20자 한줄평..." maxlength="20">
                             <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button>
@@ -156,17 +158,6 @@
                     </div>
                 </div>
             `;}).join('');
-        }
-
-        function getRandomPick() {
-            const filtered = currentData.filter(i => (fArea === '전체' || i.area === fArea) && (fCat === '전체' || i.cat === fCat));
-            if(filtered.length > 0) {
-                const picks = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 3);
-                const recArea = document.getElementById('recommend-area');
-                recArea.classList.remove('hidden');
-                recArea.innerHTML = picks.map((p, i) => `<div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-animate shadow-lg" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name)}', '_blank')" style="animation-delay: ${i * 0.1}s"><div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div><div class="font-black text-[11px] truncate text-white">${p.name}</div></div>`).join('');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
         }
 
         function detectAreaRaw(addr) {
@@ -190,14 +181,26 @@
         }
 
         function renderFilters() {
-            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
-            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
-            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
+            document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
+            document.getElementById('price-filter').innerHTML = prices.map(p => `<button onclick="setFilter('price','${p}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fPrice === p ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${p}</button>`).join('');
+            document.getElementById('cat-filter').innerHTML = cats.map(c => `<button onclick="setFilter('cat','${c}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fCat === c ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${c}</button>`).join('');
         }
 
         function setFilter(type, val) { 
-            if(type === 'area') fArea = val; if(type === 'price') fPrice = val; if(type === 'cat') fCat = val; 
+            if(type === 'area') fArea = val; 
+            if(type === 'price') fPrice = val; 
+            if(type === 'cat') fCat = val; 
             renderFilters(); filterAndRender(); 
+        }
+
+        function getRandomPick() {
+            const filtered = currentData.filter(i => (fArea === '전체' || i.area === fArea) && (fCat === '전체' || i.cat === fCat));
+            if(filtered.length > 0) {
+                const picks = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 3);
+                const recArea = document.getElementById('recommend-area');
+                recArea.classList.remove('hidden');
+                recArea.innerHTML = picks.map((p, i) => `<div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center shadow-lg" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name)}', '_blank')"><div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div><div class="font-black text-[11px] truncate text-white">${p.name}</div></div>`).join('');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => { setDayTheme(); renderFilters(); deepFetchData(); });
