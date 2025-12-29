@@ -1,6 +1,9 @@
 {
   "name": "nrf-foodie-map",
   "version": "1.0.0",
+  "scripts": {
+    "start": "node api/search.js"
+  },
   "dependencies": {
     "node-fetch": "^2.6.7"
   }
