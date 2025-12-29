@@ -1,51 +1,38 @@
 const fetch = require('node-fetch');
 
 export default async function handler(req, res) {
-  // 1번 단계에서 받은 Gemini API 키
-  const GEMINI_API_KEY = 'AIzaSyBkyt2mgTh73Z9HS8c5AuRtURxi-_T2-Pw';
-  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
+  const CLIENT_ID = 'Id2KWzmixu2C7UpDpkao';
+  const CLIENT_SECRET = 'd4sshbGFPj';
+  
+  // 데이터 수집은 더 넓게! (13개 지역)
+  const locations = [
+    '신성동', '도룡동', '죽동', '어은동', '전민동', 
+    '가정동', '구성동', '봉명동', '상대동', '관평동', 
+    '장대동', '궁동', '노은동', '만년동', '지족동', '반석동'
+  ];
+  
   try {
-    const prompt = `
-      대전광역시 유성구 연구단지(신성동, 도룡동, 죽동, 어은동, 전민동) 인근의 맛집 50개를 찾아줘.
-      반드시 다음 JSON 형식으로 응답해줘. 다른 설명은 하지마.
-      {
-        "items": [
-          {
-            "name": "식당이름",
-            "area": "동이름",
-            "cat": "음식종류",
-            "menu": "대표메뉴",
-            "score": 4.5,
-            "reviewCount": 120,
-            "isRealTime": true
-          }
-        ]
-      }
-      별점(score)은 구글 맵의 최신 데이터를 참고해서 실수(float)로 작성해줘.
-    `;
-
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+    const requests = locations.map(loc => {
+      const query = `대전 유성구 ${loc} 맛집`;
+      const apiUrl = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=10&sort=comment`;
+      return fetch(apiUrl, {
+        headers: { 'X-Naver-Client-Id': CLIENT_ID, 'X-Naver-Client-Secret': CLIENT_SECRET }
+      }).then(r => r.json());
     });
 
-    const data = await response.json();
-    const resultText = data.candidates[0].content.parts[0].text;
+    const results = await Promise.all(requests);
     
-    // JSON 텍스트만 추출 (가끔 AI가 마크다운 형식을 섞을 때를 대비)
-    const jsonString = resultText.match(/\{[\s\S]*\}/)[0];
-    const finalData = JSON.parse(jsonString);
+    let allItems = [];
+    results.forEach(data => {
+      if (data.items) allItems = [...allItems, ...data.items];
+    });
 
-    // 별점 높은 순 정렬
-    finalData.items.sort((a, b) => b.score - a.score);
+    // 중복 제거
+    const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
 
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json(finalData);
+    res.status(200).json({ items: uniqueItems });
   } catch (error) {
-    res.status(500).json({ error: 'Gemini AI 호출 실패' });
+    res.status(500).json({ error: '데이터 병합 실패' });
   }
 }
