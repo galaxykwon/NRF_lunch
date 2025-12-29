@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NRF Foodie - 막내야 고민마! 실시간 맛집 50선</title>
+    <title>NRF Foodie - 막내야 고민마! 늘프가 골라줄게</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -51,8 +51,8 @@
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
                 <div class="mb-4">
-                    <h2 class="font-black text-xl mb-1 italic">오늘 점심은 늘프가 쏜다! 🦕</h2>
-                    <p class="text-[11px] text-blue-100 font-medium" id="status-text">연구단지 실시간 맛집 50개를 분석 중...</p>
+                    <h2 class="font-black text-xl mb-1 italic text-white">오늘 점심은 늘프가 쏜다! 🦕</h2>
+                    <p class="text-[11px] text-blue-100 font-medium" id="status-text">실시간 50개 데이터를 불러오는 중...</p>
                 </div>
 
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
@@ -84,7 +84,7 @@
             <div class="flex justify-between items-center px-1">
                 <h3 class="font-black text-slate-900 text-sm italic">BEST 50 LIST <span class="text-blue-600 ml-1" id="count-badge">0</span></h3>
                 <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Auto Loading
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Auto-Syncing
                 </span>
             </div>
 
@@ -105,11 +105,43 @@
         const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
 
-        // [핵심] 페이지 로드 시 즉시 실행
         document.addEventListener('DOMContentLoaded', () => {
             renderFilters();
-            autoFetchRealTimeData(); // 자동 데이터 로드 시작
+            autoFetchData(); // 접속하자마자 실행
         });
+
+        async function autoFetchData() {
+            const status = document.getElementById('status-text');
+            try {
+                // 백엔드 호출 (api/search.js에서 display=50으로 되어있어야 함)
+                const response = await fetch(`/api/search?keyword=${encodeURIComponent('대전 유성구 연구단지 맛집')}`);
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    const realItems = data.items.map((item, idx) => {
+                        const area = detectArea(item.roadAddress || item.address);
+                        return {
+                            id: Date.now() + idx,
+                            name: item.title.replace(/<[^>]*>?/gm, ''),
+                            area: area,
+                            cat: item.category.split('>')[0] || '기타',
+                            menu: item.category.replace(/>/g, ' '),
+                            price: 12000,
+                            score: (Math.random() * 0.4 + 4.3).toFixed(1),
+                            isRealTime: true,
+                            fullAddress: item.address
+                        };
+                    }).filter(item => item.area !== '기타' || item.fullAddress.includes('유성구'));
+
+                    currentData = [...realItems, ...STATIC_DATA];
+                    filterAndRender();
+                    status.innerText = `현재 유성구 실시간 맛집 ${currentData.length}개를 불러왔습니다! 🦕`;
+                }
+            } catch (e) {
+                status.innerText = "로컬 데이터를 불러옵니다.";
+                filterAndRender();
+            }
+        }
 
         function renderFilters() {
             document.getElementById('area-filter').innerHTML = areas.map(a => `<button onclick="setFilter('area','${a}')" class="px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${fArea === a ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}">${a}</button>`).join('');
@@ -123,64 +155,6 @@
             if(type === 'cat') fCat = val;
             renderFilters();
             filterAndRender();
-        }
-
-        // [업데이트] 자동 데이터 로드 함수
-        async function autoFetchRealTimeData() {
-            const status = document.getElementById('status-text');
-            status.innerText = "유성구 연구단지 맛집 50개를 불러오고 있습니다...";
-
-            try {
-                // 더 넓고 정확한 검색을 위해 '유성구 맛집'으로 50개 요청
-                const response = await fetch(`/api/search?keyword=${encodeURIComponent('대전 유성구 연구단지 맛집')}`);
-                const data = await response.json();
-
-                if (data.items) {
-                    const realItems = data.items
-                        .map((item, idx) => {
-                            const area = detectArea(item.roadAddress || item.address);
-                            return {
-                                id: Date.now() + idx,
-                                name: item.title.replace(/<[^>]*>?/gm, ''),
-                                area: area,
-                                cat: item.category.split('>')[0] || '기타',
-                                menu: item.category.replace(/>/g, ' '),
-                                price: 12000, // API는 가격 미제공
-                                score: (Math.random() * 0.4 + 4.3).toFixed(1),
-                                isRealTime: true,
-                                fullAddress: item.address
-                            };
-                        })
-                        .filter(item => item.area !== '기타' || item.fullAddress.includes('유성구'));
-
-                    currentData = [...realItems, ...STATIC_DATA];
-                    filterAndRender();
-                    status.innerText = "늘프가 엄선한 50개의 실시간 리스트입니다! 🦕";
-                }
-            } catch (e) {
-                console.error(e);
-                status.innerText = "네트워크 지연으로 로컬 데이터를 표시합니다.";
-                filterAndRender();
-            }
-        }
-
-        // [업데이트] 버튼 누를 때 새로고침 대신 '현재 리스트'에서 뽑기만 수행
-        function getRandomPick() {
-            const pool = filterAndRender();
-            const recArea = document.getElementById('recommend-area');
-            
-            if(pool.length > 0) {
-                const shuffled = [...pool].sort(() => 0.5 - Math.random());
-                const picks = shuffled.slice(0, 3);
-                recArea.classList.remove('hidden');
-                recArea.innerHTML = picks.map((p, i) => `
-                    <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-animate shadow-lg" style="animation-delay: ${i * 0.1}s">
-                        <div class="text-[9px] font-black text-blue-100 mb-1 tracking-widest">${i+1} PICK</div>
-                        <div class="font-black text-[11px] truncate text-white">${p.name}</div>
-                    </div>
-                `).join('');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
         }
 
         function filterAndRender() {
@@ -219,6 +193,23 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function getRandomPick() {
+            const pool = filterAndRender();
+            const recArea = document.getElementById('recommend-area');
+            if(pool.length > 0) {
+                const shuffled = [...pool].sort(() => 0.5 - Math.random());
+                const picks = shuffled.slice(0, 3);
+                recArea.classList.remove('hidden');
+                recArea.innerHTML = picks.map((p, i) => `
+                    <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center pick-animate shadow-lg" style="animation-delay: ${i * 0.1}s">
+                        <div class="text-[9px] font-black text-blue-100 mb-1 tracking-widest">${i+1} PICK</div>
+                        <div class="font-black text-[11px] truncate text-white">${p.name}</div>
+                    </div>
+                `).join('');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         function detectArea(addr) {
