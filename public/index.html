@@ -36,7 +36,7 @@
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 늘프가 골라드릴게요!</h2>
+                <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 <br> 늘프가 골라드릴게요!</h2>
                 <p class="text-xs text-blue-100 font-bold mb-6 opacity-90" id="day-theme-sub">데이터 로딩 중...</p>
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
@@ -63,7 +63,7 @@
         <footer class="py-12 px-6 text-center space-y-4">
             <div class="bg-slate-100/50 p-5 rounded-3xl">
                 <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-tighter">⭐ 별점 부여 원리</p>
-                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">본 앱의 별점은 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다.</p>
+                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">본 앱의 별점은 늘프 AI와 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다.</p>
             </div>
             <p class="text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase">Designed by Galaxy</p>
         </footer>
@@ -94,7 +94,7 @@
 
         function setDayTheme() {
             const day = new Date().getDay();
-            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화끈하게 화이팅! 🔥", "수수하게 백반 어때요? 🍚", "목요일은 국물 요리! 🍲", "즐거운 금요일 맛집 탐방! 🚗", "행복한 토요일! 🍕"];
+            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화!끈하게 화이팅! 🔥", "수~수하게 백반 어때요? 🍚", "목요일은 국물 요리! 🍲", "즐거운 금요일 맛집 탐방! 🚗", "행복한 토요일! 🍕"];
             document.getElementById('day-theme-sub').innerText = themes[day];
         }
 
