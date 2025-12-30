@@ -26,27 +26,27 @@
 
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2.5" onclick="location.reload()">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                </div>
+            <div class="flex items-center" onclick="location.reload()">
                 <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
             </div>
-            <button onclick="document.getElementById('add-modal').style.display='flex'" class="text-[10px] bg-slate-900 text-white px-3 py-2 rounded-full font-bold">맛집 제보하기 +</button>
+            <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" referrerpolicy="no-referrer" alt="늘프" class="h-10 w-auto object-contain">
         </div>
     </header>
 
     <main class="max-w-md mx-auto px-5 pt-5 space-y-6">
         <section class="bg-blue-600 rounded-[2.5rem] p-6 text-white shadow-2xl relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 <br> 늘프가 골라드릴게요!</h2>
+                <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 늘프가 골라드릴게요!</h2>
                 <p class="text-xs text-blue-100 font-bold mb-6 opacity-90" id="day-theme-sub">데이터 로딩 중...</p>
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
                 <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
                     <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
                     <span>운명의 메뉴 한 끼 뽑기</span>
                 </button>
-                <p class="text-[10px] text-blue-200 mt-4 text-center font-medium" id="status-text">동기화 중...</p>
+                <div class="flex justify-between items-center mt-4">
+                    <p class="text-[10px] text-blue-200 font-medium" id="status-text">동기화 중...</p>
+                    <button onclick="document.getElementById('add-modal').style.display='flex'" class="text-[10px] bg-white/20 text-white px-3 py-1.5 rounded-full font-bold border border-white/20">맛집 제보하기 +</button>
+                </div>
             </div>
         </section>
 
@@ -55,7 +55,7 @@
                 <div class="flex gap-2 overflow-x-auto no-scrollbar" id="area-filter"></div>
                 <div class="flex gap-2 overflow-x-auto no-scrollbar" id="price-filter"></div>
                 <div class="flex gap-2 overflow-x-auto no-scrollbar" id="cat-filter"></div>
-                <div class="px-1"><input type="text" id="search-input" oninput="filterAndRender()" placeholder="식당 이름 검색..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs outline-none"></div>
+                <div class="px-1"><input type="text" id="search-input" oninput="filterAndRender()" placeholder="식당 이름 검색..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs outline-none shadow-sm"></div>
             </div>
             <div id="restaurant-list" class="space-y-4"></div>
         </section>
@@ -63,7 +63,7 @@
         <footer class="py-12 px-6 text-center space-y-4">
             <div class="bg-slate-100/50 p-5 rounded-3xl">
                 <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-tighter">⭐ 별점 부여 원리</p>
-                <p class="text-[10px] text-slate-400 font-medium">본 앱의 별점은 늘프의 AI지능과<br> 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다.</p>
+                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">본 앱의 별점은 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다.</p>
             </div>
             <p class="text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase">Designed by Galaxy</p>
         </footer>
@@ -73,7 +73,7 @@
         <div class="modal-content shadow-2xl">
             <h3 class="font-black text-xl mb-4">맛집 제보하기 🍱</h3>
             <div class="space-y-3">
-                <input type="text" id="new-res-name" placeholder="식당 이름" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm border-2 border-transparent focus:border-blue-600 transition-all">
+                <input type="text" id="new-res-name" placeholder="식당 이름" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm">
                 <select id="new-res-area" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">지역 선택</option><option value="신성동">신성동</option><option value="전민동">전민동</option><option value="도룡동">도룡동</option><option value="죽동">죽동</option><option value="어은/궁동/봉명">어은/궁동/봉명</option><option value="노은/반석">노은/반석</option><option value="만년/둔산">만년/둔산</option></select>
                 <select id="new-res-cat" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">카테고리 선택</option><option value="한식">한식</option><option value="중식">중식</option><option value="일식">일식</option><option value="양식">양식</option><option value="분식">분식</option></select>
                 <button onclick="submitNewStore()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black mt-2">지금 등록하기</button>
@@ -94,7 +94,7 @@
 
         function setDayTheme() {
             const day = new Date().getDay();
-            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화!끈하게 화이팅! 🔥", "수~수하게 백반 어때요? 🍚", "목요일은 국물 요리! 🍲", "멀리 나가는 금요일! 🚗", "행복한 토요일! 🍕"];
+            const themes = ["일요일! 🏠", "월요병 극복 고기데이 😊", "화끈하게 화이팅! 🔥", "수수하게 백반 어때요? 🍚", "목요일은 국물 요리! 🍲", "즐거운 금요일 맛집 탐방! 🚗", "행복한 토요일! 🍕"];
             document.getElementById('day-theme-sub').innerText = themes[day];
         }
 
@@ -105,9 +105,9 @@
                 if (data.items) {
                     currentData = data.items;
                     filterAndRender();
-                    document.getElementById('status-text').innerText = `${currentData.length}개의 맛집 동기화 완료!`;
+                    document.getElementById('status-text').innerText = `${currentData.length}개 식당 동기화`;
                 }
-            } catch (e) { document.getElementById('status-text').innerText = "데이터 로딩 오류"; }
+            } catch (e) { document.getElementById('status-text').innerText = "로딩 오류"; }
         }
 
         async function submitNewStore() {
@@ -117,7 +117,7 @@
             if(!name || !address || !category) return alert("정보를 모두 입력해주세요!");
             const { error } = await supabaseClient.from('my_stores').insert([{ name, address, category }]);
             if(error) alert("등록 실패");
-            else { alert("제보해주셔서 감사합니다!"); location.reload(); }
+            else { alert("제보 감사합니다!"); location.reload(); }
         }
 
         function setStar(resName, rating) {
@@ -168,7 +168,7 @@
             container.innerHTML = list.map(item => {
                 const safeId = item.name.replace(/\s/g, '');
                 return `
-                <div class="res-card p-5 mb-4">
+                <div class="res-card p-5 mb-4 shadow-sm border border-slate-50">
                     <div class="flex justify-between items-center mb-3" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(item.name)}', '_blank')">
                         <div class="flex-1 pr-4">
                             <div class="flex gap-2 items-center mb-1">
@@ -176,7 +176,7 @@
                                 ${item.isVip ? '<span class="text-[8px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full font-bold">추천</span>' : ''}
                             </div>
                             <h3 class="font-black text-slate-900 text-base leading-tight">${item.name}</h3>
-                            <p class="text-[11px] text-slate-400 truncate">${item.category}</p>
+                            <p class="text-[11px] text-slate-400 truncate mt-0.5">${item.category}</p>
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-blue-600 font-black text-lg">★ ${item.realScore}</div>
