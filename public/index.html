@@ -74,7 +74,7 @@
             <h3 class="font-black text-xl mb-4">맛집 제보하기 🍱</h3>
             <div class="space-y-3">
                 <input type="text" id="new-res-name" placeholder="식당 이름" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm">
-                <select id="new-res-area" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">지역 선택</option><option value="신성동">신성동</option><option value="전민동">전민동</option><option value="도룡동">도룡동</option><option value="죽동">죽동</option><option value="어은/궁동/봉명">어은/궁동/봉명</option><option value="노은/반석">노은/반석</option><option value="만년/둔산">만년/둔산</option></select>
+                <select id="new-res-area" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">지역 선택</option><option value="신성동">신성동</option><option value="전민동">전민동</option><option value="도룡동">도룡동</option><option value="죽동">죽동</option><option value="어은/궁동/봉명">어은/궁동/봉명</option><option value="노은/반석">노은/반석</option><option value="만년/둔산/기타">만년/둔산/기타</option></select>
                 <select id="new-res-cat" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm appearance-none"><option value="">카테고리 선택</option><option value="한식">한식</option><option value="중식">중식</option><option value="일식">일식</option><option value="양식">양식</option><option value="분식">분식</option></select>
                 <button onclick="submitNewStore()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-black mt-2">지금 등록하기</button>
             </div>
@@ -88,7 +88,7 @@
 
         let currentData = [];
         let fArea = '전체', fPrice = '전체', fCat = '전체';
-        const areas = ['전체', '신성동', '도룡동', '죽동', '전민동', '어은/궁동/봉명', '노은/반석', '만년/둔산'];
+        const areas = ['전체', '신성동', '도룡동', '죽동', '전민동', '어은/궁동/봉명', '노은/반석', '만년/둔산/기타'];
         const prices = ['전체', '1만원 미만', '1~2만원', '2~3만원', '3만원 이상'];
         const cats = ['전체', '한식', '중식', '일식', '양식', '분식', '기타'];
 
@@ -204,7 +204,7 @@
             if (addr.includes('전민동') || addr.includes('문지동')) return '전민동';
             if (addr.includes('어은동') || addr.includes('궁동') || addr.includes('봉명동')) return '어은/궁동/봉명';
             if (addr.includes('노은동') || addr.includes('반석동')) return '노은/반석';
-            if (addr.includes('만년동') || addr.includes('둔산동')) return '만년/둔산';
+            if (addr.includes('만년동') || addr.includes('둔산동')) return '만년/둔산/기타';
             return '기타';
         }
 
