@@ -13,11 +13,26 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .res-card { transition: all 0.2s ease; border-radius: 1.25rem; overflow: hidden; background: white; border: 1px solid #f1f5f9; }
         .res-card:active { transform: scale(0.97); }
+        
+        /* 리뷰 스크롤 및 누적 스타일 */
         .review-box { background: #f8fafc; border-radius: 12px; padding: 12px; margin-top: 12px; border: 1px solid #f1f5f9; }
-        .review-item { font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; gap: 4px; }
+        .review-items { max-height: 120px; overflow-y: auto; padding-right: 4px; }
+        .review-items::-webkit-scrollbar { width: 3px; }
+        .review-items::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .review-item { font-size: 11px; color: #64748b; margin-bottom: 8px; display: flex; gap: 6px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
+        
         .review-input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         .star-rating { display: flex; gap: 6px; color: #cbd5e1; cursor: pointer; font-size: 18px; }
         .star-rating .active { color: #facc15; }
+        
+        /* 애니메이션 효과 */
+        @keyframes shuffle {
+            0% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(-10px); opacity: 1; }
+            100% { transform: translateY(0); opacity: 0.5; }
+        }
+        .anim-shuffle { animation: shuffle 0.15s infinite; }
+
         #add-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 2rem; padding: 2rem; }
     </style>
@@ -27,7 +42,7 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div class="max-w-md mx-auto px-5 h-16 flex items-center justify-between">
             <div class="flex items-center" onclick="location.reload()">
-                <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">FOODIE MAP</span></h1>
+                <h1 class="text-sm font-black text-slate-900 tracking-tight">NRF <span class="text-blue-600">AI 고속도로</span></h1>
             </div>
             <img src="https://nrf.re.kr/resources/img/contents/character/nulph_move.png" referrerpolicy="no-referrer" alt="늘프" class="h-10 w-auto object-contain">
         </div>
@@ -38,11 +53,14 @@
             <div class="relative z-10">
                 <h2 class="font-black text-lg mb-0.5 tracking-tight italic">오늘 점심 메뉴는 <br> 늘프가 골라드릴게요!</h2>
                 <p class="text-xs text-blue-100 font-bold mb-6 opacity-90" id="day-theme-sub">데이터 로딩 중...</p>
+                
                 <div id="recommend-area" class="grid grid-cols-3 gap-2.5 mb-6 hidden"></div>
-                <button onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2">
-                    <img src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
-                    <span>운명의 메뉴 한 끼 뽑기</span>
+                
+                <button id="pick-btn" onclick="getRandomPick()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-transform active:scale-95">
+                    <img id="btn-icon" src="https://nrf.re.kr/resources/img/contents/character/nulph_intro.png" referrerpolicy="no-referrer" class="h-6 w-auto">
+                    <span id="btn-text">운명의 메뉴 한 끼 뽑기</span>
                 </button>
+
                 <div class="flex justify-between items-center mt-4">
                     <p class="text-[10px] text-blue-200 font-medium" id="status-text">동기화 중...</p>
                     <button onclick="document.getElementById('add-modal').style.display='flex'" class="text-[10px] bg-white/20 text-white px-3 py-1.5 rounded-full font-bold border border-white/20">맛집 제보하기 +</button>
@@ -62,8 +80,8 @@
 
         <footer class="py-12 px-6 text-center space-y-4">
             <div class="bg-slate-100/50 p-5 rounded-3xl">
-                <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-tighter">⭐ 별점 부여 원리</p>
-                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">본 앱의 별점은 늘프 AI와 임직원분들이 직접 남겨주신 실시간 평점의 평균값으로 계산됩니다.</p>
+                <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-tighter">⭐ NRF-AI 고속도로 프로젝트</p>
+                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">임직원분들의 실제 리뷰 데이터가 실시간으로 반영됩니다.</p>
             </div>
             <p class="text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase">Designed by Galaxy</p>
         </footer>
@@ -105,7 +123,7 @@
                 if (data.items) {
                     currentData = data.items;
                     filterAndRender();
-                    document.getElementById('status-text').innerText = `${currentData.length}개 식당 동기화`;
+                    document.getElementById('status-text').innerText = `${currentData.length}개 식당 동기화 완료`;
                 }
             } catch (e) { document.getElementById('status-text').innerText = "로딩 오류"; }
         }
@@ -137,12 +155,13 @@
             if(!comment) return alert("한줄평을 입력해주세요!");
             const { error } = await supabaseClient.from('reviews').insert([{ restaurant_name: resName, comment: comment, rating: rating }]);
             if(error) alert("등록 실패");
-            else { alert("의견 반영 완료!"); location.reload(); }
+            else { alert("의견 반영 완료!"); filterAndRender(); }
         }
 
         async function filterAndRender() {
             const searchVal = document.getElementById('search-input').value.toLowerCase();
-            const { data: reviews } = await supabaseClient.from('reviews').select('*');
+            const { data: reviews } = await supabaseClient.from('reviews').select('*').order('created_at', { ascending: false });
+            
             const filtered = currentData.map(item => {
                 const myReviews = reviews?.filter(r => r.restaurant_name === item.name) || [];
                 const avgRating = myReviews.length > 0 ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
@@ -184,12 +203,25 @@
                         </div>
                     </div>
                     <div class="review-box">
-                        <div class="review-items">${item.reviews.length > 0 ? item.reviews.slice(-2).map(r => `<div class="review-item"><span>💬</span><span>${r.comment} (★${r.rating})</span></div>`).join('') : '<div class="text-[10px] text-slate-300 italic">첫 리뷰를 남겨주세요!</div>'}</div>
+                        <div class="review-items">
+                            ${item.reviews.length > 0 ? item.reviews.map(r => `
+                                <div class="review-item">
+                                    <span class="shrink-0">💬</span>
+                                    <div>
+                                        <div class="font-medium text-slate-700 leading-tight">${r.comment}</div>
+                                        <div class="text-[9px] text-yellow-500 font-bold">★ ${r.rating}</div>
+                                    </div>
+                                </div>`).join('') 
+                            : '<div class="text-[10px] text-slate-300 italic text-center py-2">아직 리뷰가 없습니다. 첫 리뷰를 남겨주세요!</div>'}
+                        </div>
                         <div class="review-input-group">
                             <div class="star-rating" id="star-group-${safeId}">
                                 <span onclick="setStar('${item.name}', 1)">★</span><span onclick="setStar('${item.name}', 2)">★</span><span onclick="setStar('${item.name}', 3)">★</span><span onclick="setStar('${item.name}', 4)">★</span><span onclick="setStar('${item.name}', 5)">★</span>
                             </div>
-                            <div class="flex gap-2"><input type="text" id="input-${safeId}" placeholder="한줄평..." class="flex-1 text-xs border-b border-slate-200 outline-none pb-1"><button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0">등록</button></div>
+                            <div class="flex gap-2">
+                                <input type="text" id="input-${safeId}" placeholder="한줄평 입력..." class="flex-1 text-xs border-b border-slate-200 outline-none pb-1 bg-transparent">
+                                <button onclick="saveReview('${item.name}')" class="text-blue-600 font-black text-[11px] shrink-0 px-2">등록</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -221,14 +253,33 @@
 
         function setFilter(type, val) { if(type === 'area') fArea = val; if(type === 'price') fPrice = val; if(type === 'cat') fCat = val; filterAndRender(); }
 
+        // 메뉴 뽑기 애니메이션 로직
         function getRandomPick() {
+            const btn = document.getElementById('pick-btn');
+            const btnText = document.getElementById('btn-text');
+            const recArea = document.getElementById('recommend-area');
+            
             const filtered = currentData.filter(i => (fArea === '전체' || detectAreaRaw(i.address) === fArea) && (fCat === '전체' || simplifyCategory(i.category) === fCat));
-            if(filtered.length > 0) {
+            
+            if(filtered.length === 0) return alert("필터에 맞는 식당이 없습니다!");
+
+            // 애니메이션 시작
+            btn.disabled = true;
+            btnText.innerText = "늘프가 고민 중...";
+            recArea.classList.remove('hidden');
+            recArea.innerHTML = `<div class="col-span-3 text-center py-4 font-bold text-blue-200 anim-shuffle">🚀 메뉴 고속 탐색 중...</div>`;
+
+            setTimeout(() => {
                 const picks = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 3);
-                const recArea = document.getElementById('recommend-area');
-                recArea.classList.remove('hidden');
-                recArea.innerHTML = picks.map((p, i) => `<div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center shadow-lg" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name)}', '_blank')"><div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div><div class="font-black text-[11px] truncate text-white">${p.name}</div></div>`).join('');
-            }
+                recArea.innerHTML = picks.map((p, i) => `
+                    <div class="bg-white/20 p-3 rounded-2xl border border-white/30 text-center shadow-lg transition-all hover:scale-105 active:scale-95" 
+                         onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name)}', '_blank')">
+                        <div class="text-[9px] font-black text-blue-100 mb-1">${i+1} PICK</div>
+                        <div class="font-black text-[11px] truncate text-white">${p.name}</div>
+                    </div>`).join('');
+                btn.disabled = false;
+                btnText.innerText = "다른 메뉴 다시 뽑기";
+            }, 1200); // 1.2초 후 결과 노출
         }
 
         document.addEventListener('DOMContentLoaded', () => { setDayTheme(); deepFetchData(); });
