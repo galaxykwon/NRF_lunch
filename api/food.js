@@ -75,17 +75,17 @@ export default async function handler(req, res) {
     { name: '영칼로리포케', address: '신성동', category: '기타', price: 12000, isVip: true }
   ];
 
-  const locations = ['신성동', '도룡동', '죽동', '전민동', '어은동', '궁동', '만년동', '노은동'];
+  const locations = ['신성동', '도룡동', '죽동', '전민동', '어은동', '궁동', '만년동', '노은동', '문지동'];
 
   try {
     const { data: userStores } = await supabase.from('my_stores').select('*');
     const naverRequests = locations.map(loc => 
-      fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&display=15`, {
+      fetch(`https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent('대전 ' + loc + ' 점심 맛집')}&display=15`, {
         headers: { 'X-Naver-Client-Id': NAVER_ID, 'X-Naver-Client-Secret': NAVER_SECRET }
       }).then(r => r.json()).catch(() => ({ items: [] }))
     );
     const kakaoRequests = locations.map(loc => 
-      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('대전 ' + loc + ' 맛집')}&size=10`, {
+      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('대전 ' + loc + ' 점심 맛집')}&size=10`, {
         headers: { 'Authorization': `KakaoAK ${KAKAO_KEY}` }
       }).then(r => r.json()).catch(() => ({ documents: [] }))
     );
