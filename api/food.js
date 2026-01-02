@@ -41,7 +41,6 @@ export default async function handler(req, res) {
     { name: '워낭명가', address: '봉명동', category: '한식', price: 35000, isVip: true },
     { name: '버기즈', address: '어은동', category: '양식', price: 11000, isVip: true },
     { name: '퍼블릭마켓', address: '어은동', category: '기타', price: 15000, isVip: true },
-    { name: '달구지막창', address: '어은동', category: '한식', price: 15000, isVip: true },
     { name: '신가네매운떡볶이', address: '궁동', category: '분식', price: 6000, isVip: true },
     { name: '초원양꼬치', address: '궁동', category: '기타', price: 18000, isVip: true },
     { name: '수정자갈치꼼장어', address: '궁동', category: '한식', price: 15000, isVip: true },
