@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     { name: '아자스', address: '죽동', category: '일식', price: 15000, isVip: true },
     { name: '스시화', address: '신성동', category: '일식', price: 15000, isVip: true },
     { name: '오한순손수제비', address: '죽동', category: '한식', price: 11000, isVip: true },
-    { name: '키우키우', address: '죽동', category: '양식', price: 16000, isVip: true },
+    { name: '키우츠', address: '죽동', category: '일식', price: 16000, isVip: true },
     { name: '토시살롱', address: '죽동', category: '한식', price: 18000, isVip: true },
     { name: '도우모', address: '죽동', category: '일식', price: 20000, isVip: true },
     { name: '행포케', address: '죽동', category: '기타', price: 11000, isVip: true },
